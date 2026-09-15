@@ -3,3 +3,8 @@ description: Aplicativo para gestão de territórios.
 publish_to: "none"
 
 version: 1.0.0+1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  image_picker: ^1.1.2  # Adicione esta linha
