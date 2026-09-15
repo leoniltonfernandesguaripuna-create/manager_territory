@@ -1,0 +1,5 @@
+name: territorio_manager
+description: Aplicativo para gestão de territórios.
+publish_to: "none"
+
+version: 1.0.0+1
