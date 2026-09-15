@@ -1,113 +1,134 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const TerritorioManagerApp());
+  runApp(const TerritoryManagerApp());
 }
 
-class TerritorioManagerApp extends StatelessWidget {
-  const TerritorioManagerApp({super.key});
+class TerritoryManagerApp extends StatelessWidget {
+  const TerritoryManagerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Território Manager',
       debugShowCheckedModeBanner: false,
+      title: 'territory_manager',
       theme: ThemeData(
+        scaffoldBackgroundColor: const Color(0xFFA6BAC8), // Fundo azul acinzentado do print
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E3A8A)),
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF1F4F8),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1D3D68),
-        ),
       ),
-      home: const HomePage(),
+      home: const DashboardScreen(),
     );
   }
 }
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _HomePageState extends State<HomePage> {
-  int diaSelecionado = 14;
-
-  final List<int> dias = [12, 13, 14, 15, 16, 17, 18, 19];
+class _DashboardScreenState extends State<DashboardScreen> {
+  int selectedDay = 14;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1D3D68),
-        foregroundColor: Colors.white,
-        centerTitle: true,
+        backgroundColor: const Color(0xFF112D4E),
         title: const Text(
           'MAPA DO TERRITÓRIO',
-          style: TextStyle(
-            fontFamily: 'serif',
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
         ),
+        centerTitle: true,
+        elevation: 0,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _calendario(),
+              // Card do Calendário
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.calendar_month, color: Color(0xFF8B263E), size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Setembro 2026 (Ativo: 13/09/2026)',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: List.generate(8, (index) {
+                        int day = 12 + index;
+                        bool isSelected = day == selectedDay;
+                        return GestureDetector(
+                          onTap: () => setState(() => selectedDay = day),
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: isSelected ? const Color(0xFF1E3A8A) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isSelected ? const Color(0xFF1E3A8A) : Colors.grey.shade300,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                '$day',
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : Colors.black87,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 24),
               const Text(
                 'Território de Congregação',
                 style: TextStyle(
-                  fontFamily: 'serif',
-                  color: Color(0xFF1D3D68),
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  color: Color(0xFF112D4E),
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
+              
+              // Grid de Funcionalidades
               GridView.count(
-                crossAxisCount: 3,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 20,
-                crossAxisSpacing: 20,
-                children: [
-                  MenuCard(
-                    icone: Icons.map_outlined,
-                    titulo: 'Territórios',
-                    onTap: () => _mostrarAviso('Territórios'),
-                  ),
-                  MenuCard(
-                    icone: Icons.calendar_month_outlined,
-                    titulo: 'Serviço de
-Campo',
-                    onTap: () => _mostrarAviso('Serviço de Campo'),
-                  ),
-                  MenuCard(
-                    icone: Icons.event_available_outlined,
-                    titulo: 'Eventos',
-                    onTap: () => _mostrarAviso('Eventos'),
-                  ),
-                  MenuCard(
-                    icone: Icons.visibility_outlined,
-                    titulo: 'Dirigente',
-                    onTap: () => _mostrarAviso('Dirigente'),
-                  ),
-                  MenuCard(
-                    icone: Icons.edit_outlined,
-                    titulo: 'S-13',
-                    onTap: () => _mostrarAviso('S-13'),
-                  ),
-                  MenuCard(
-                    icone: Icons.admin_panel_settings_outlined,
-                    titulo: 'Administrador',
-                    onTap: () => _mostrarAviso('Administrador'),
-                  ),
+                crossAxisCount: 3,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                children: const [
+                  MenuCard(icon: Icons.map_outlined, label: 'Territórios'),
+                  MenuCard(icon: Icons.calendar_today_outlined, label: 'Serviço de Campo'),
+                  MenuCard(icon: Icons.event_available_outlined, label: 'Eventos'),
+                  MenuCard(icon: Icons.visibility_outlined, label: 'Dirigente'),
+                  MenuCard(icon: Icons.edit_outlined, label: 'S-13'),
+                  MenuCard(icon: Icons.admin_panel_settings_outlined, label: 'Administrador'),
                 ],
               ),
             ],
@@ -116,147 +137,43 @@ Campo',
       ),
     );
   }
+}
 
-  Widget _calendario() {
+class MenuCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const MenuCard({super.key, required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x22000000),
-            blurRadius: 6,
-            offset: Offset(0, 3),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Row(
-            children: [
-              Icon(
-                Icons.calendar_today,
-                size: 14,
-                color: Color(0xFF9D2632),
-              ),
-              SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  'Setembro 2026 (Ativo: 13/09/2026)',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF263238),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: dias.map((dia) {
-              final selecionado = dia == diaSelecionado;
-
-              return InkWell(
-                borderRadius: BorderRadius.circular(6),
-                onTap: () {
-                  setState(() {
-                    diaSelecionado = dia;
-                  });
-                },
-                child: Container(
-                  width: 30,
-                  height: 28,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: selecionado
-                        ? const Color(0xFF1D3D68)
-                        : Colors.white,
-                    border: Border.all(
-                      color: const Color(0xFFCCD3DA),
-                    ),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    '$dia',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: selecionado
-                          ? Colors.white
-                          : const Color(0xFF37474F),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
+          Icon(icon, size: 32, color: const Color(0xFF4A5568)),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2D3748),
+            ),
           ),
         ],
-      ),
-    );
-  }
-
-  void _mostrarAviso(String nomePagina) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Tela de $nomePagina será criada em seguida.'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-}
-
-class MenuCard extends StatelessWidget {
-  final IconData icone;
-  final String titulo;
-  final VoidCallback onTap;
-
-  const MenuCard({
-    super.key,
-    required this.icone,
-    required this.titulo,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      elevation: 2,
-      shadowColor: Colors.black26,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 6,
-            vertical: 12,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icone,
-                size: 29,
-                color: const Color(0xFF68798B),
-              ),
-              const SizedBox(height: 9),
-              Text(
-                titulo,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFamily: 'serif',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 11,
-                  color: Color(0xFF22313F),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
