@@ -8,3 +8,6 @@ dependencies:
   flutter:
     sdk: flutter
   image_picker: ^1.1.2  # Adicione esta linha
+
+
+
