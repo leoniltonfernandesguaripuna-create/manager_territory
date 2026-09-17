@@ -9,8 +9,14 @@ workflows:
       - name: Get Flutter packages
         script: flutter pub get
 
+      - name: Gerar ícones do app
+        script: dart run flutter_launcher_icons
+
       - name: Criar pastas nativas
         script: flutter create . --platforms android
+
+      - name: Recriar ícones após flutter create
+        script: dart run flutter_launcher_icons
 
       - name: Criar google-services.json
         script: |
@@ -20,4 +26,3 @@ workflows:
         script: flutter build apk --release
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
-  
