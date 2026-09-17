@@ -121,9 +121,7 @@ class _HomePageState extends State<HomePage> {
         color: pode ? const Color(0xFFE6F4EA) : const Color(0xFFFFF3CD),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: pode
-              ? const Color(0xFFA8D5A8)
-              : C.amarelo.withOpacity(0.5),
+          color: pode ? const Color(0xFFA8D5A8) : C.amarelo.withOpacity(0.5),
         ),
       ),
       child: Row(
@@ -171,9 +169,7 @@ class _HomePageState extends State<HomePage> {
         color: salvo ? const Color(0xFFE6F4EA) : const Color(0xFFFFF3CD),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: salvo
-              ? const Color(0xFFA8D5A8)
-              : C.amarelo.withOpacity(0.5),
+          color: salvo ? const Color(0xFFA8D5A8) : C.amarelo.withOpacity(0.5),
         ),
       ),
       child: Row(
@@ -425,8 +421,7 @@ class _HomePageState extends State<HomePage> {
                     style: TextStyle(
                       fontSize: 10,
                       color: ativo ? C.azul : C.cinza,
-                      fontWeight:
-                          ativo ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: ativo ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                 ],
