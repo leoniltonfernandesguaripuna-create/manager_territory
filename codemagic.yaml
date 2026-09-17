@@ -13,10 +13,9 @@ workflows:
         script: |
           mkdir -p /tmp/temp_project
           cd /tmp/temp_project
-          flutter create --platforms android,ios --project-name territory_manager temp_app
+          flutter create --platforms android --project-name territory_manager temp_app
           cd $CM_BUILD_DIR
           cp -r /tmp/temp_project/temp_app/android ./
-          cp -r /tmp/temp_project/temp_app/ios ./
 
       - name: Gerar ícones do app
         script: dart run flutter_launcher_icons
