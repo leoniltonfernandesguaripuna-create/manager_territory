@@ -10,7 +10,7 @@ workflows:
         script: flutter pub get
 
       - name: Criar pastas nativas
-        script: flutter create . --platforms android
+        script: flutter create . --platforms android,ios
 
       - name: Gerar ícones do app
         script: dart run flutter_launcher_icons
