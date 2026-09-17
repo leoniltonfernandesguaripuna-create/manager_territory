@@ -9,7 +9,7 @@ workflows:
       - name: Get Flutter packages
         script: flutter pub get
 
-      - name: Criar pastas nativas
+      - name: Criar pastas nativas (android e ios)
         script: flutter create . --platforms android,ios
 
       - name: Gerar ícones do app
