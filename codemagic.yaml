@@ -5,16 +5,19 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       flutter: stable
-      groups:
-        - firebase_credentials # Use o mesmo nome que você deu ao grupo no Codemagic
     scripts:
       - name: Get Flutter packages
         script: flutter pub get
-      # O script abaixo usa o comando 'echo' para criar o arquivo
-      # 'google-services.json' na pasta correta durante o build.
-      - name: Create google-services.json
-        script: echo $GOOGLE_SERVICES_JSON > $CM_BUILD_DIR/android/app/google-services.json
+
+      - name: Criar pastas nativas
+        script: flutter create . --platforms android
+
+      - name: Criar google-services.json
+        script: |
+          echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+
       - name: Build Android APK
         script: flutter build apk --release
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
+  
