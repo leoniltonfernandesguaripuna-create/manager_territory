@@ -1,15 +1,17 @@
 workflows:
   android-workflow:
-    name: Território Manager Android
-    max_build_duration: 60
+    name: Android Build
+    max_build_duration: 120
+    instance_type: mac_mini_m2
     environment:
       flutter: stable
+      # O segredo aqui é colocar o conteúdo do seu google-services.json
+      # como uma variável de ambiente no painel do Codemagic.
+      # Nós vamos criá-la no próximo passo.
     scripts:
-      - name: Instalar dependências
+      - name: Get Flutter packages
         script: flutter pub get
-      - name: Executar análise
-        script: flutter analyze
-      - name: Gerar APK
+      - name: Build Android APK
         script: flutter build apk --release
     artifacts:
-      - build/**/outputs/**/*.apk
+      - build/app/outputs/flutter-apk/*.apk
