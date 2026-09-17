@@ -16,6 +16,20 @@ workflows:
           rm -rf lib
           cp -r /tmp/lib_backup lib
 
+      - name: DEBUG - Ver estrutura android
+        script: |
+          echo "=== android/ ==="
+          ls -la android/
+          echo ""
+          echo "=== android/app/ ==="
+          ls -la android/app/
+          echo ""
+          echo "=== android/app/src/ ==="
+          ls -la android/app/src/
+          echo ""
+          echo "=== android/app/src/main/ ==="
+          ls -la android/app/src/main/
+
       - name: Gerar ícones do app
         script: dart run flutter_launcher_icons
 
