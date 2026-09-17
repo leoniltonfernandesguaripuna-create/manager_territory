@@ -22,7 +22,7 @@ class TerritoryManagerApp extends StatelessWidget {
           brightness: Brightness.light,
         ),
       ),
-      home: const HomePage(),
+      home: HomePage(),
     );
   }
 }
