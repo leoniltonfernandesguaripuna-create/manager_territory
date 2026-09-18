@@ -9,12 +9,19 @@ workflows:
       - name: Get Flutter packages
         script: flutter pub get
 
-      - name: Backup lib e criar pastas nativas
+      - name: Backup lib
+        script: cp -r lib /tmp/lib_backup
+
+      - name: Criar pastas nativas
+        script: flutter create . --platforms android --project-name territory_manager
+
+      - name: Restaurar lib
         script: |
-          cp -r lib /tmp/lib_backup
-          flutter create . --platforms android --project-name territory_manager
           rm -rf lib
           cp -r /tmp/lib_backup lib
+
+      - name: Gerar ícones do app
+        script: dart run flutter_launcher_icons
 
       - name: Criar google-services.json
         script: |
@@ -24,4 +31,3 @@ workflows:
         script: flutter build apk --release
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
-  
