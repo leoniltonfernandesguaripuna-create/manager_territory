@@ -10,8 +10,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout do repositório
-        uses: actions/checkout@v4
+      - name: Clonar repositório manualmente
+        run: |
+          git clone https://github.com/leoniltonfernandes/manager_territory.git /tmp/proj
+          cp -r /tmp/proj/. .
+
+      - name: DEBUG - Verificar arquivos
+        run: |
+          echo "=== RAIZ ==="
+          ls -la
+          echo ""
+          echo "=== LIB ==="
+          ls -la lib/
+          echo ""
+          echo "=== LIB/SCREENS ==="
+          ls -la lib/screens/ || echo "PASTA SCREENS NAO EXISTE"
 
       - name: Configurar Java
         uses: actions/setup-java@v4
@@ -42,11 +55,6 @@ jobs:
 
       - name: Criar google-services.json
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > android/app/google-services.json
-
-      - name: DEBUG - Verificar lib antes do build
-        run: |
-          echo "=== arquivos em lib/ ==="
-          find lib -type f
 
       - name: Compilar APK
         run: flutter build apk --release
