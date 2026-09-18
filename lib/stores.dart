@@ -12,11 +12,6 @@ class Designacao {
 }
 
 class AppState extends ChangeNotifier {
-  
-  });
-}
-
-class AppState extends ChangeNotifier {
   static final AppState instance = AppState._();
   AppState._();
   DateTime? lastSaved;
