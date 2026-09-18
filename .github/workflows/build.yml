@@ -13,20 +13,6 @@ jobs:
       - name: Checkout do repositório
         uses: actions/checkout@v4
 
-      - name: DEBUG - Listar arquivos baixados
-        run: |
-          echo "=== RAIZ ==="
-          ls -la
-          echo ""
-          echo "=== LIB ==="
-          ls -la lib/
-          echo ""
-          echo "=== LIB/SCREENS ==="
-          ls -la lib/screens/
-          echo ""
-          echo "=== Commit atual ==="
-          git log -1 --oneline
-
       - name: Configurar Java
         uses: actions/setup-java@v4
         with:
@@ -50,6 +36,9 @@ jobs:
         run: |
           rm -rf android
           cp -r /tmp/fresh_app/android ./android
+
+      - name: Gerar ícones do app
+        run: dart run flutter_launcher_icons
 
       - name: Criar google-services.json
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > android/app/google-services.json
