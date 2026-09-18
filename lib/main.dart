@@ -1,5 +1,5 @@
+
 import 'package:flutter/material.dart';
-import 'screens/home.dart';
 
 void main() {
   runApp(const TerritoryManagerApp());
@@ -13,16 +13,15 @@ class TerritoryManagerApp extends StatelessWidget {
     return MaterialApp(
       title: 'Territory Manager',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFF0F2F5),
-        fontFamily: 'Roboto',
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1A365D),
-          brightness: Brightness.light,
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Teste'),
+          backgroundColor: const Color(0xFF1A365D),
+        ),
+        body: const Center(
+          child: Text('Funcionou!'),
         ),
       ),
-      home: HomePage(),
     );
   }
 }
