@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:territory_manager/screens/home_page.dart';
+import 'screens/home_page.dart';
 
 void main() {
   runApp(const TerritoryManagerApp());
@@ -22,7 +22,7 @@ class TerritoryManagerApp extends StatelessWidget {
           brightness: Brightness.light,
         ),
       ),
-      home: const HomePage(),
+      home: HomePage(),   // ← SEM const
     );
   }
 }
