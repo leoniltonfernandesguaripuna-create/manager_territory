@@ -13,6 +13,23 @@ jobs:
       - name: Checkout do repositório
         uses: actions/checkout@v4
 
+      - name: DEBUG - Listar arquivos do lib
+        run: |
+          echo "=== RAIZ ==="
+          ls -la
+          echo ""
+          echo "=== LIB ==="
+          ls -la lib/
+          echo ""
+          echo "=== LIB/SCREENS ==="
+          ls -la lib/screens/
+          echo ""
+          echo "=== Commit atual ==="
+          git log -1 --oneline
+          echo ""
+          echo "=== Procurar home ==="
+          find lib -name "home*" -type f
+
       - name: Configurar Java
         uses: actions/setup-java@v4
         with:
