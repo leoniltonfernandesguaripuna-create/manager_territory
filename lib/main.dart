@@ -16,7 +16,8 @@ class TerritoryManagerApp extends StatelessWidget {
       home: Scaffold(
         appBar: AppBar(
           backgroundColor: C.azul,
-          title: const Text('Teste'),
+          foregroundColor: Colors.white,
+          title: const Text('Territory Manager'),
           actions: const [BadgeUsuario(), BotaoSalvar()],
         ),
         body: const Center(child: Text('Estrutura OK!')),
