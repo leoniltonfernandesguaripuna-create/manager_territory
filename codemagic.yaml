@@ -9,16 +9,23 @@ workflows:
       - name: Get Flutter packages
         script: flutter pub get
 
-      - name: Backup lib
-        script: cp -r lib /tmp/lib_backup
-
       - name: Criar pastas nativas
-        script: flutter create . --platforms android --project-name territory_manager
-
-      - name: Restaurar lib
         script: |
+          cp -r lib /tmp/lib_backup
+          mv pubspec.yaml /tmp/pubspec_backup.yaml
+          rm -rf android .metadata
+          flutter create --platforms android --project-name territory_manager .
+          mv /tmp/pubspec_backup.yaml pubspec.yaml
           rm -rf lib
           cp -r /tmp/lib_backup lib
+
+      - name: DEBUG - Ver android
+        script: |
+          echo "=== android/app/src/main/ ==="
+          ls -la android/app/src/main/ || echo "PASTA NAO EXISTE"
+          echo ""
+          echo "=== procurar AndroidManifest ==="
+          find android -name "AndroidManifest.xml" || echo "NAO ENCONTRADO"
 
       - name: Gerar ícones do app
         script: dart run flutter_launcher_icons
