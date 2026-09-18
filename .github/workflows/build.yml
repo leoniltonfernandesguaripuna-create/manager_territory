@@ -10,10 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clonar repositório manualmente
-        run: |
-          git clone https://github.com/leoniltonfernandes/manager_territory.git /tmp/proj
-          cp -r /tmp/proj/. .
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
 
       - name: DEBUG - Verificar arquivos
         run: |
@@ -22,9 +20,6 @@ jobs:
           echo ""
           echo "=== LIB ==="
           ls -la lib/
-          echo ""
-          echo "=== LIB/SCREENS ==="
-          ls -la lib/screens/ || echo "PASTA SCREENS NAO EXISTE"
 
       - name: Configurar Java
         uses: actions/setup-java@v4
