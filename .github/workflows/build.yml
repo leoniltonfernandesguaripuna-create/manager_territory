@@ -32,13 +32,10 @@ jobs:
           cd /tmp
           flutter create --project-name territory_manager --platforms android fresh_app
 
-      - name: Copiar APENAS as pastas nativas para o projeto
+      - name: Remover android antigo e copiar o novo
         run: |
-          cp -r /tmp/fresh_app/android $GITHUB_WORKSPACE/android
-          cp -r /tmp/fresh_app/.metadata $GITHUB_WORKSPACE/.metadata
-
-      - name: Gerar ícones do app
-        run: dart run flutter_launcher_icons
+          rm -rf android
+          cp -r /tmp/fresh_app/android ./android
 
       - name: Criar google-services.json
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > android/app/google-services.json
