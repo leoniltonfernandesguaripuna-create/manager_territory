@@ -24,18 +24,18 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Criar projeto Flutter limpo em pasta temporária
+      - name: Instalar dependências
+        run: flutter pub get
+
+      - name: Criar projeto Flutter em pasta separada
         run: |
           cd /tmp
           flutter create --project-name territory_manager --platforms android fresh_app
 
-      - name: Copiar estrutura android para o projeto
+      - name: Copiar APENAS as pastas nativas para o projeto
         run: |
-          rm -rf android
-          cp -r /tmp/fresh_app/android ./android
-
-      - name: Instalar dependências
-        run: flutter pub get
+          cp -r /tmp/fresh_app/android $GITHUB_WORKSPACE/android
+          cp -r /tmp/fresh_app/.metadata $GITHUB_WORKSPACE/.metadata
 
       - name: Gerar ícones do app
         run: dart run flutter_launcher_icons
