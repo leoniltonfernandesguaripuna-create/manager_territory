@@ -13,22 +13,19 @@ jobs:
       - name: Checkout do repositório
         uses: actions/checkout@v4
 
-      - name: DEBUG - Listar arquivos do lib
+      - name: DEBUG - O que o Git conhece
         run: |
-          echo "=== RAIZ ==="
-          ls -la
+          echo "=== GIT LS-FILES lib/ ==="
+          git ls-files lib/ || true
           echo ""
-          echo "=== LIB ==="
-          ls -la lib/
+          echo "=== GIT LS-FILES lib/screens/ ==="
+          git ls-files lib/screens/ || true
           echo ""
-          echo "=== LIB/SCREENS ==="
-          ls -la lib/screens/
+          echo "=== FIND em lib ==="
+          find lib -type f || true
           echo ""
-          echo "=== Commit atual ==="
-          git log -1 --oneline
-          echo ""
-          echo "=== Procurar home ==="
-          find lib -name "home*" -type f
+          echo "=== GITIGNORE existe? ==="
+          find . -name ".gitignore" -o -name ".gitgnore" || true
 
       - name: Configurar Java
         uses: actions/setup-java@v4
