@@ -13,6 +13,20 @@ jobs:
       - name: Checkout do repositório
         uses: actions/checkout@v4
 
+      - name: DEBUG - Listar arquivos baixados
+        run: |
+          echo "=== RAIZ ==="
+          ls -la
+          echo ""
+          echo "=== LIB ==="
+          ls -la lib/
+          echo ""
+          echo "=== LIB/SCREENS ==="
+          ls -la lib/screens/
+          echo ""
+          echo "=== Commit atual ==="
+          git log -1 --oneline
+
       - name: Configurar Java
         uses: actions/setup-java@v4
         with:
