@@ -24,6 +24,16 @@ jobs:
         with:
           channel: 'stable'
 
+      - name: Criar projeto Flutter limpo em pasta temporária
+        run: |
+          cd /tmp
+          flutter create --project-name territory_manager --platforms android fresh_app
+
+      - name: Copiar estrutura android para o projeto
+        run: |
+          rm -rf android
+          cp -r /tmp/fresh_app/android ./android
+
       - name: Instalar dependências
         run: flutter pub get
 
