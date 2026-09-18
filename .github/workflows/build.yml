@@ -13,20 +13,6 @@ jobs:
       - name: Checkout do repositório
         uses: actions/checkout@v4
 
-      - name: DEBUG - O que o Git conhece
-        run: |
-          echo "=== GIT LS-FILES lib/ ==="
-          git ls-files lib/ || true
-          echo ""
-          echo "=== GIT LS-FILES lib/screens/ ==="
-          git ls-files lib/screens/ || true
-          echo ""
-          echo "=== FIND em lib ==="
-          find lib -type f || true
-          echo ""
-          echo "=== GITIGNORE existe? ==="
-          find . -name ".gitignore" -o -name ".gitgnore" || true
-
       - name: Configurar Java
         uses: actions/setup-java@v4
         with:
@@ -56,6 +42,11 @@ jobs:
 
       - name: Criar google-services.json
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > android/app/google-services.json
+
+      - name: DEBUG - Verificar lib antes do build
+        run: |
+          echo "=== arquivos em lib/ ==="
+          find lib -type f
 
       - name: Compilar APK
         run: flutter build apk --release
