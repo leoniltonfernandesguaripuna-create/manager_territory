@@ -13,14 +13,6 @@ jobs:
       - name: Checkout do repositório
         uses: actions/checkout@v4
 
-      - name: DEBUG - Verificar arquivos
-        run: |
-          echo "=== RAIZ ==="
-          ls -la
-          echo ""
-          echo "=== LIB ==="
-          ls -la lib/
-
       - name: Configurar Java
         uses: actions/setup-java@v4
         with:
