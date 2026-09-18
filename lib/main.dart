@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'cloud.dart';
 
-void main() => runApp(const TerritorioApp());
-
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Cloud.iniciar();
+  runApp(const TerritorioApp());
+}
 class TerritorioApp extends StatelessWidget {
   const TerritorioApp({super.key});
 
