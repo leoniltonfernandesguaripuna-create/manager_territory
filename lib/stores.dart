@@ -1,5 +1,15 @@
 import 'package:flutter/material.dart';
-import 'cores.dart';
+
+class Designacao {
+  String nome;
+  String dataDesignacao;
+  String dataConclusao;
+  Designacao({
+    this.nome = '',
+    this.dataDesignacao = '',
+    this.dataConclusao = '',
+  });
+}
 
 class AppState extends ChangeNotifier {
   static final AppState instance = AppState._();
@@ -69,15 +79,18 @@ class DesignacaoStore extends ChangeNotifier {
   static final DesignacaoStore instance = DesignacaoStore._();
   DesignacaoStore._();
   final Map<String, List<Designacao>> _dados = {};
+
   Designacao get(String territorio, int index) {
     final lista = _dados[territorio];
     if (lista == null || index >= lista.length) return Designacao();
     return lista[index];
   }
+
   void setAll(String territorio, List<Designacao> lista) {
     _dados[territorio] = lista;
     notifyListeners();
   }
+
   String ultimaDataConclusao(String territorio) {
     final lista = _dados[territorio];
     if (lista == null || lista.isEmpty) return '';
@@ -95,6 +108,7 @@ class DesignacaoStore extends ChangeNotifier {
     }
     return textoMaisRecente;
   }
+
   DateTime? _parseData(String txt) {
     final n = txt.replaceAll('-', '/').replaceAll('.', '/');
     final p = n.split('/');
@@ -119,7 +133,10 @@ class DirigentesStore {
     ['Irmão Lucas Pereira', 'Irmão Mateus Rocha', 'Irmão Tiago Ribeiro'],
   ];
   static List<String> validos(int coluna) {
-    return nomes[coluna].map((n) => n.trim()).where((n) => n.isNotEmpty).toList();
+    return nomes[coluna]
+        .map((n) => n.trim())
+        .where((n) => n.isNotEmpty)
+        .toList();
   }
   static void setAt(int coluna, int index, String valor) {
     while (nomes[coluna].length <= index) {
