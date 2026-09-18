@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'screens/home_page.dart';
 
@@ -22,7 +23,7 @@ class TerritoryManagerApp extends StatelessWidget {
           brightness: Brightness.light,
         ),
       ),
-      home: HomePage(),   // ← SEM const
+      home: HomePage(),
     );
   }
 }
