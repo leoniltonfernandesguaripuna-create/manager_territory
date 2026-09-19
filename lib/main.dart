@@ -1,5 +1,17 @@
 import 'package:flutter/material.dart';
-import 'cloud.dart';
+
+// ============== MOCK DO CLOUD (Para funcionar no DartPad) ==============
+// No seu projeto real, isso vem do arquivo 'cloud.dart'
+class Cloud {
+  static bool disponivel = true;
+  static Future<void> iniciar() async {}
+  static Future<Map<String, dynamic>?> ler(String doc) async => null;
+  static Future<void> salvar(String doc, Map<String, dynamic> dados) async {
+    // Simula um pequeno atraso de rede
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+}
+// ========================================================================
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -602,7 +614,7 @@ class _HomePageState extends State<HomePage> {
           height: 150,
           decoration: BoxDecoration(color: C.bege, borderRadius: BorderRadius.circular(12)),
           child: Stack(children: [
-            Center(child: Icon(Icons.map_outlined, size: 60, color: C.cinza.withOpacity(0.6))),
+            Center(child: Icon(Icons.map_outlined, size: 60, color: C.cinza.withValues(alpha: 0.6))),
             const Positioned(top: 25, left: 40,
                 child: Icon(Icons.location_on, color: C.azul, size: 28)),
             const Positioned(top: 70, right: 80,
@@ -1133,7 +1145,7 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
       child: _fotoMapa != null
           ? Image.network(_fotoMapa!, fit: BoxFit.cover)
           : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Icon(Icons.image_outlined, size: 60, color: C.cinza.withOpacity(0.6)),
+              Icon(Icons.image_outlined, size: 60, color: C.cinza.withValues(alpha: 0.6)),
               const SizedBox(height: 10),
               const Text('Nenhuma foto do mapa',
                   style: TextStyle(fontSize: 13, color: C.cinza)),
