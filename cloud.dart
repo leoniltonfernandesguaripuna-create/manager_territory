@@ -6,13 +6,15 @@ class Cloud {
   static bool _pronto = false;
 
   static Future<void> iniciar() async {
-    try {
-      await Firebase.initializeApp();
-      _pronto = true;
-    } catch (_) {
-      _pronto = false;
-    }
+  try {
+    await Firebase.initializeApp();
+    _pronto = true;
+    print('✅ Firebase inicializado com sucesso!');
+  } catch (e) {
+    _pronto = false;
+    print('❌ Erro ao inicializar Firebase: $e');
   }
+}
 
   static bool get disponivel => _pronto;
 
