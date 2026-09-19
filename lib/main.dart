@@ -52,19 +52,30 @@ class AuthStore extends ChangeNotifier {
   }
   bool login(String tipo, String senha) {
     if (tipo == 'PRINCIPAL') {
-      if (senha == senhaPrincipal) { _usuario = 'PRINCIPAL'; notifyListeners(); return true; }
+      if (senha == senhaPrincipal) {
+        _usuario = 'PRINCIPAL';
+        notifyListeners();
+        return true;
+      }
       return false;
     }
     if (admins.containsKey(tipo) && admins[tipo] == senha) {
-      _usuario = tipo; notifyListeners(); return true;
+      _usuario = tipo;
+      notifyListeners();
+      return true;
     }
     return false;
   }
-  void logout() { _usuario = null; notifyListeners(); }
+  void logout() {
+    _usuario = null;
+    notifyListeners();
+  }
   bool alterarSenhaAdmin(String letra, String novaSenha) {
     if (!isPrincipal) return false;
     if (!admins.containsKey(letra)) return false;
-    admins[letra] = novaSenha; notifyListeners(); return true;
+    admins[letra] = novaSenha;
+    notifyListeners();
+    return true;
   }
 }
 
@@ -72,7 +83,10 @@ class AppState extends ChangeNotifier {
   static final AppState instance = AppState._();
   AppState._();
   DateTime? lastSaved;
-  void save() { lastSaved = DateTime.now(); notifyListeners(); }
+  void save() {
+    lastSaved = DateTime.now();
+    notifyListeners();
+  }
   String get lastSavedText {
     if (lastSaved == null) return 'Nunca salvo';
     final d = lastSaved!;
@@ -174,7 +188,11 @@ class DesignacaoStore extends ChangeNotifier {
     final ano = p.length >= 3 ? int.tryParse(p[2]) : DateTime.now().year;
     if (dia == null || mes == null || ano == null) return null;
     if (dia < 1 || dia > 31 || mes < 1 || mes > 12) return null;
-    try { return DateTime(ano, mes, dia); } catch (_) { return null; }
+    try {
+      return DateTime(ano, mes, dia);
+    } catch (_) {
+      return null;
+    }
   }
 }
 
@@ -199,7 +217,9 @@ class DirigentesStore {
     return nomes[coluna].map((n) => n.trim()).where((n) => n.isNotEmpty).toList();
   }
   static void setAt(int coluna, int index, String valor) {
-    while (nomes[coluna].length <= index) { nomes[coluna].add(''); }
+    while (nomes[coluna].length <= index) {
+      nomes[coluna].add('');
+    }
     nomes[coluna][index] = valor;
   }
 }
@@ -213,8 +233,10 @@ class BotaoSalvar extends StatelessWidget {
         content: Row(children: [
           const Icon(Icons.check_circle, color: Colors.white, size: 20),
           const SizedBox(width: 10),
-          Expanded(child: Text('Salvo: ${AppState.instance.lastSavedText}',
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white))),
+          Expanded(
+            child: Text('Salvo: ${AppState.instance.lastSavedText}',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+          ),
         ]),
         backgroundColor: C.verde,
         duration: const Duration(seconds: 2),
@@ -245,11 +267,15 @@ class BadgeUsuario extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.only(right: 4),
           child: Chip(
-            avatar: Icon(logado ? Icons.verified_user : Icons.person_outline,
-                color: Colors.white, size: 14),
-            label: Text(AuthStore.instance.nomeUsuario,
-                style: const TextStyle(color: Colors.white, fontSize: 10,
-                    fontWeight: FontWeight.bold)),
+            avatar: Icon(
+              logado ? Icons.verified_user : Icons.person_outline,
+              color: Colors.white,
+              size: 14,
+            ),
+            label: Text(
+              AuthStore.instance.nomeUsuario,
+              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+            ),
             backgroundColor: logado ? C.verde : C.cinza,
             padding: EdgeInsets.zero,
             visualDensity: VisualDensity.compact,
@@ -2917,20 +2943,6 @@ class _ItemPermissao extends StatelessWidget {
 }
 
 // ============== MODELO AUXILIAR ==============
-class _LinhaServico {
-  final String mes;
-  final String semana;
-  final String horario;
-  String local;
-  String dirigente;
-  _LinhaServico({
-    required this.mes,
-    required this.semana,
-    required this.horario,
-    this.local = '',
-    this.dirigente = '',
-  });
-}
 class _LinhaServico {
   final String mes;
   final String semana;
