@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 // ================= MOCK CLOUD (só para DartPad) =================
@@ -6,7 +7,7 @@ class Cloud {
   static bool disponivel = false;
 
   static Future<void> iniciar() async {
-    disponivel = false; // sem nuvem no DartPad
+    disponivel = false;
   }
 
   static Future<Map<String, dynamic>?> ler(String colecao, String id) async =>
@@ -33,7 +34,6 @@ Future<void> main() async {
   await Cloud.iniciar();
   runApp(const TerritorioApp());
 }
-
 class TerritorioApp extends StatelessWidget {
   const TerritorioApp({super.key});
   @override
