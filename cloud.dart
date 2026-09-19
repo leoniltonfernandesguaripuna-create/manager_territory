@@ -1,37 +1,26 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 class Cloud {
-  static final FirebaseFirestore _db = FirebaseFirestore.instance;
-  static bool _pronto = false;
+  static final _db = FirebaseFirestore.instance;
 
-  static Future<void> iniciar() async {
-  try {
-    await Firebase.initializeApp();
-    _pronto = true;
-    print('✅ FIREBASE OK');
-  } catch (e) {
-    _pronto = false;
-    print('❌ ERRO FIREBASE: $e');
-  }
-}
-
-  static bool get disponivel => _pronto;
-
-  static Future<void> salvar(String doc, Map<String, dynamic> dados) async {
-    if (!_pronto) return;
-    try {
-      await _db.collection('congregacao').doc(doc).set(dados);
-    } catch (_) {}
+  // ✅ id opcional — usa 'principal' se não passar
+  static Future<Map<String, dynamic>?> ler(
+    String colecao, [
+    String id = 'principal',
+  ]) async {
+    final doc = await _db.collection(colecao).doc(id).get();
+    return doc.data();
   }
 
-  static Future<Map<String, dynamic>?> ler(String doc) async {
-    if (!_pronto) return null;
-    try {
-      final d = await _db.collection('congregacao').doc(doc).get();
-      return d.data();
-    } catch (_) {
-      return null;
-    }
+  // ✅ dados é o 2º argumento, id é opcional
+  static Future<void> salvar(
+    String colecao,
+    Map<String, dynamic> dados, [
+    String id = 'principal',
+  ]) async {
+    await _db.collection(colecao).doc(id).set(
+          dados,
+          SetOptions(merge: true),
+        );
   }
 }
