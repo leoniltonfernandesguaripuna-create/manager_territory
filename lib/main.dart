@@ -1,41 +1,37 @@
 import 'package:flutter/material.dart';
-import 'cloud.dart';
 
+// ================= MOCK CLOUD (só para DartPad) =================
+class Cloud {
+  static final Map<String, Map<String, dynamic>> _mem = {};
+  static bool disponivel = false;
+
+  static Future<void> iniciar() async {
+    disponivel = false; // sem nuvem no DartPad
+  }
+
+  static Future<Map<String, dynamic>?> ler(String colecao, String id) async =>
+      _mem['$colecao/$id'];
+
+  static Future<void> salvar(
+    String colecao,
+    String id,
+    Map<String, dynamic> dados,
+  ) async {
+    _mem['$colecao/$id'] = {...?_mem['$colecao/$id'], ...dados};
+  }
+
+  static Future<Map<String, dynamic>?> lerDoc(String colecao) =>
+      ler(colecao, 'principal');
+
+  static Future<void> salvarDoc(String colecao, Map<String, dynamic> dados) =>
+      salvar(colecao, 'principal', dados);
+}
+
+// ================= APP =================
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Cloud.iniciar();
-  await _carregarDados();
   runApp(const TerritorioApp());
-}
-
-Future<void> _carregarDados() async {
-  if (!Cloud.disponivel) return;
-  try {
-    final terr = await Cloud.ler('territorios');
-    if (terr != null && terr['lista'] != null) {
-      TerritoriosStore.instance.carregar(List<Map<String, dynamic>>.from(
-        (terr['lista'] as List).map((e) => Map<String, dynamic>.from(e)),
-      ));
-    }
-    final desig = await Cloud.ler('designacoes');
-    if (desig != null && desig['dados'] != null) {
-      DesignacaoStore.instance.carregar(Map<String, dynamic>.from(desig['dados']));
-    }
-    final obs = await Cloud.ler('observacoes');
-    if (obs != null && obs['dados'] != null) {
-      ObsStore.instance.carregar(Map<String, dynamic>.from(obs['dados']));
-    }
-    final dir = await Cloud.ler('dirigentes');
-    if (dir != null && dir['nomes'] != null) {
-      DirigentesStore.carregar(List<List<String>>.from(
-        (dir['nomes'] as List).map((e) => List<String>.from(e)),
-      ));
-    }
-    final adm = await Cloud.ler('admins');
-    if (adm != null && adm['senhas'] != null) {
-      AuthStore.instance.carregarAdmins(Map<String, String>.from(adm['senhas']));
-    }
-  } catch (_) {}
 }
 
 class TerritorioApp extends StatelessWidget {
@@ -112,7 +108,7 @@ class AuthStore extends ChangeNotifier {
     if (!admins.containsKey(letra)) return false;
     admins[letra] = novaSenha;
     notifyListeners();
-    Cloud.salvar('admins', {'senhas': admins});
+    Cloud.salvarDoc('admins', {'senhas': admins});
     return true;
   }
   void carregarAdmins(Map<String, String> dados) {
@@ -187,7 +183,7 @@ class TerritoriosStore extends ChangeNotifier {
     notifyListeners();
   }
   Future<void> _salvar() async {
-    await Cloud.salvar('territorios', {
+    await Cloud.salvarDoc('territorios', {
       'lista': lista.map((t) => t.toJson()).toList(),
     });
   }
@@ -254,7 +250,7 @@ class DesignacaoStore extends ChangeNotifier {
     _dados.forEach((k, v) {
       out[k] = v.map((d) => d.toJson()).toList();
     });
-    await Cloud.salvar('designacoes', {'dados': out});
+    await Cloud.salvarDoc('designacoes', {'dados': out});
   }
 
   String ultimaDataConclusao(String territorio) {
@@ -309,7 +305,7 @@ class ObsStore extends ChangeNotifier {
     notifyListeners();
   }
   Future<void> _salvar() async {
-    await Cloud.salvar('observacoes', {'dados': _obs});
+    await Cloud.salvarDoc('observacoes', {'dados': _obs});
   }
 }
 
@@ -328,7 +324,7 @@ class DirigentesStore {
       nomes[coluna].add('');
     }
     nomes[coluna][index] = valor;
-    Cloud.salvar('dirigentes', {'nomes': nomes});
+    Cloud.salvarDoc('dirigentes', {'nomes': nomes});
   }
   static void carregar(List<List<String>> dados) {
     if (dados.isEmpty) return;
@@ -341,11 +337,11 @@ class BotaoSalvar extends StatelessWidget {
   const BotaoSalvar({super.key});
   Future<void> _salvar(BuildContext context) async {
     AppState.instance.save();
-    await Cloud.salvar('territorios', {
+    await Cloud.salvarDoc('territorios', {
       'lista': TerritoriosStore.instance.lista.map((t) => t.toJson()).toList(),
     });
-    await Cloud.salvar('admins', {'senhas': AuthStore.instance.admins});
-    await Cloud.salvar('dirigentes', {'nomes': DirigentesStore.nomes});
+    await Cloud.salvarDoc('admins', {'senhas': AuthStore.instance.admins});
+    await Cloud.salvarDoc('dirigentes', {'nomes': DirigentesStore.nomes});
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -358,9 +354,7 @@ class BotaoSalvar extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                Cloud.disponivel
-                    ? 'Salvo na nuvem!'
-                    : 'Nuvem offline',
+                Cloud.disponivel ? 'Salvo na nuvem!' : 'Nuvem offline (DartPad)',
                 style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ),
@@ -592,7 +586,7 @@ class _HomePageState extends State<HomePage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: const [
+        const Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Text('Visão Geral do Território',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: C.azul)),
           Icon(Icons.chevron_right, color: C.cinza),
@@ -602,7 +596,7 @@ class _HomePageState extends State<HomePage> {
           height: 150,
           decoration: BoxDecoration(color: C.bege, borderRadius: BorderRadius.circular(12)),
           child: Stack(children: [
-            Center(child: Icon(Icons.map_outlined, size: 60, color: C.cinza.withOpacity(0.6))),
+            Center(child: Icon(Icons.map_outlined, size: 60, color: C.cinza.withValues(alpha: 0.6))),
             const Positioned(top: 25, left: 40,
                 child: Icon(Icons.location_on, color: C.azul, size: 28)),
             const Positioned(top: 70, right: 80,
@@ -618,7 +612,7 @@ class _HomePageState extends State<HomePage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: const [
+      child: const Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Text('Notas recentes do serviço',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: C.azul)),
         SizedBox(height: 12),
@@ -1133,7 +1127,7 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
       child: _fotoMapa != null
           ? Image.network(_fotoMapa!, fit: BoxFit.cover)
           : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Icon(Icons.image_outlined, size: 60, color: C.cinza.withOpacity(0.6)),
+              Icon(Icons.image_outlined, size: 60, color: C.cinza.withValues(alpha: 0.6)),
               const SizedBox(height: 10),
               const Text('Nenhuma foto do mapa',
                   style: TextStyle(fontSize: 13, color: C.cinza)),
