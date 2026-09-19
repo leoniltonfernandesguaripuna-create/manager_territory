@@ -11,31 +11,26 @@ Future<void> main() async {
 Future<void> _carregarDados() async {
   if (!Cloud.disponivel) return;
   try {
-    // Territórios
     final terr = await Cloud.ler('territorios');
     if (terr != null && terr['lista'] != null) {
       TerritoriosStore.instance.carregar(List<Map<String, dynamic>>.from(
         (terr['lista'] as List).map((e) => Map<String, dynamic>.from(e)),
       ));
     }
-    // Designações
     final desig = await Cloud.ler('designacoes');
     if (desig != null && desig['dados'] != null) {
       DesignacaoStore.instance.carregar(Map<String, dynamic>.from(desig['dados']));
     }
-    // Observações
     final obs = await Cloud.ler('observacoes');
     if (obs != null && obs['dados'] != null) {
       ObsStore.instance.carregar(Map<String, dynamic>.from(obs['dados']));
     }
-    // Dirigentes
     final dir = await Cloud.ler('dirigentes');
     if (dir != null && dir['nomes'] != null) {
       DirigentesStore.carregar(List<List<String>>.from(
         (dir['nomes'] as List).map((e) => List<String>.from(e)),
       ));
     }
-    // Admins
     final adm = await Cloud.ler('admins');
     if (adm != null && adm['senhas'] != null) {
       AuthStore.instance.carregarAdmins(Map<String, String>.from(adm['senhas']));
@@ -246,7 +241,9 @@ class DesignacaoStore extends ChangeNotifier {
   void carregar(Map<String, dynamic> dados) {
     _dados.clear();
     dados.forEach((key, value) {
-      final lista = (value as List).map((e) => Designacao.fromJson(Map<String, dynamic>.from(e))).toList();
+      final lista = (value as List)
+          .map((e) => Designacao.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
       _dados[key] = lista;
     });
     notifyListeners();
@@ -344,14 +341,11 @@ class BotaoSalvar extends StatelessWidget {
   const BotaoSalvar({super.key});
   Future<void> _salvar(BuildContext context) async {
     AppState.instance.save();
-    // Envia tudo pra nuvem
     await Cloud.salvar('territorios', {
       'lista': TerritoriosStore.instance.lista.map((t) => t.toJson()).toList(),
     });
     await Cloud.salvar('admins', {'senhas': AuthStore.instance.admins});
     await Cloud.salvar('dirigentes', {'nomes': DirigentesStore.nomes});
-    final dOut = <String, dynamic>{};
-    for (int i = 0; i < 4; i++) {}
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -366,7 +360,7 @@ class BotaoSalvar extends StatelessWidget {
               child: Text(
                 Cloud.disponivel
                     ? 'Salvo na nuvem!'
-                    : 'Nuvem offline — salvando local',
+                    : 'Nuvem offline',
                 style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ),
