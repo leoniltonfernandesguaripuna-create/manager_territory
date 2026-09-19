@@ -1,40 +1,21 @@
 workflows:
-  android-workflow:
-    name: Android Build
-    max_build_duration: 120
-    instance_type: mac_mini_m2
+  android-release:
+    name: Android Release
+    max_build_duration: 60
+    instance_type: mac_mini_m2 # Ou linux_x2 para builds mais rápidos
     environment:
       flutter: stable
+      groups:
+        - firebase_credentials # <-- Referencia o grupo de variáveis criado
     scripts:
+      - name: Load Firebase configuration
+        script: |
+          #!/usr/bin/env sh
+          set -e
+          echo $ANDROID_FIREBASE_SECRET > $CM_BUILD_DIR/android/app/google-services.json
       - name: Get Flutter packages
         script: flutter pub get
-
-      - name: Criar pastas nativas
-        script: |
-          cp -r lib /tmp/lib_backup
-          mv pubspec.yaml /tmp/pubspec_backup.yaml
-          rm -rf android .metadata
-          flutter create --platforms android --project-name territory_manager .
-          mv /tmp/pubspec_backup.yaml pubspec.yaml
-          rm -rf lib
-          cp -r /tmp/lib_backup lib
-
-      - name: DEBUG - Ver android
-        script: |
-          echo "=== android/app/src/main/ ==="
-          ls -la android/app/src/main/ || echo "PASTA NAO EXISTE"
-          echo ""
-          echo "=== procurar AndroidManifest ==="
-          find android -name "AndroidManifest.xml" || echo "NAO ENCONTRADO"
-
-      - name: Gerar ícones do app
-        script: dart run flutter_launcher_icons
-
-      - name: Criar google-services.json
-        script: |
-          echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
-
       - name: Build Android APK
         script: flutter build apk --release
     artifacts:
-      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/flutter-apk/app-release.apk
