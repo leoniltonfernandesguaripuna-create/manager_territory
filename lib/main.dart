@@ -1,6 +1,47 @@
 import 'package:flutter/material.dart';
+import 'cloud.dart';
 
-void main() => runApp(const TerritorioApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Cloud.iniciar();
+  await _carregarDados();
+  runApp(const TerritorioApp());
+}
+
+Future<void> _carregarDados() async {
+  if (!Cloud.disponivel) return;
+  try {
+    // Territórios
+    final terr = await Cloud.ler('territorios');
+    if (terr != null && terr['lista'] != null) {
+      TerritoriosStore.instance.carregar(List<Map<String, dynamic>>.from(
+        (terr['lista'] as List).map((e) => Map<String, dynamic>.from(e)),
+      ));
+    }
+    // Designações
+    final desig = await Cloud.ler('designacoes');
+    if (desig != null && desig['dados'] != null) {
+      DesignacaoStore.instance.carregar(Map<String, dynamic>.from(desig['dados']));
+    }
+    // Observações
+    final obs = await Cloud.ler('observacoes');
+    if (obs != null && obs['dados'] != null) {
+      ObsStore.instance.carregar(Map<String, dynamic>.from(obs['dados']));
+    }
+    // Dirigentes
+    final dir = await Cloud.ler('dirigentes');
+    if (dir != null && dir['nomes'] != null) {
+      DirigentesStore.carregar(List<List<String>>.from(
+        (dir['nomes'] as List).map((e) => List<String>.from(e)),
+      ));
+    }
+    // Admins
+    final adm = await Cloud.ler('admins');
+    if (adm != null && adm['senhas'] != null) {
+      AuthStore.instance.carregarAdmins(Map<String, String>.from(adm['senhas']));
+    }
+  } catch (_) {}
+}
 
 class TerritorioApp extends StatelessWidget {
   const TerritorioApp({super.key});
@@ -34,6 +75,7 @@ class C {
   static const cinzaSabado = Color(0xFFD3D3D3);
 }
 
+// ============== AUTH STORE ==============
 class AuthStore extends ChangeNotifier {
   static final AuthStore instance = AuthStore._();
   AuthStore._();
@@ -75,10 +117,17 @@ class AuthStore extends ChangeNotifier {
     if (!admins.containsKey(letra)) return false;
     admins[letra] = novaSenha;
     notifyListeners();
+    Cloud.salvar('admins', {'senhas': admins});
     return true;
+  }
+  void carregarAdmins(Map<String, String> dados) {
+    admins.clear();
+    admins.addAll(dados);
+    notifyListeners();
   }
 }
 
+// ============== APP STATE ==============
 class AppState extends ChangeNotifier {
   static final AppState instance = AppState._();
   AppState._();
@@ -98,10 +147,16 @@ class AppState extends ChangeNotifier {
   }
 }
 
+// ============== TERRITÓRIO ==============
 class Territorio {
   String numero;
   String nome;
   Territorio({required this.numero, required this.nome});
+  Map<String, dynamic> toJson() => {'numero': numero, 'nome': nome};
+  factory Territorio.fromJson(Map<String, dynamic> j) => Territorio(
+        numero: j['numero']?.toString() ?? '',
+        nome: j['nome']?.toString() ?? '',
+      );
 }
 
 class TerritoriosStore extends ChangeNotifier {
@@ -126,14 +181,39 @@ class TerritoriosStore extends ChangeNotifier {
   void renomear(int index, String novoNome) {
     lista[index].nome = novoNome;
     notifyListeners();
+    _salvar();
+  }
+  void carregar(List<Map<String, dynamic>> dados) {
+    if (dados.isEmpty) return;
+    lista.clear();
+    for (final d in dados) {
+      lista.add(Territorio.fromJson(d));
+    }
+    notifyListeners();
+  }
+  Future<void> _salvar() async {
+    await Cloud.salvar('territorios', {
+      'lista': lista.map((t) => t.toJson()).toList(),
+    });
   }
 }
 
+// ============== DESIGNAÇÃO ==============
 class Designacao {
   String nome;
   String dataDesignacao;
   String dataConclusao;
   Designacao({this.nome = '', this.dataDesignacao = '', this.dataConclusao = ''});
+  Map<String, dynamic> toJson() => {
+        'nome': nome,
+        'dataDesignacao': dataDesignacao,
+        'dataConclusao': dataConclusao,
+      };
+  factory Designacao.fromJson(Map<String, dynamic> j) => Designacao(
+        nome: j['nome']?.toString() ?? '',
+        dataDesignacao: j['dataDesignacao']?.toString() ?? '',
+        dataConclusao: j['dataConclusao']?.toString() ?? '',
+      );
 }
 
 class DesignacaoStore extends ChangeNotifier {
@@ -154,11 +234,30 @@ class DesignacaoStore extends ChangeNotifier {
     }
     _dados[territorio]![index] = d;
     notifyListeners();
+    _salvar();
   }
 
   void limparTudo() {
     _dados.clear();
     notifyListeners();
+    _salvar();
+  }
+
+  void carregar(Map<String, dynamic> dados) {
+    _dados.clear();
+    dados.forEach((key, value) {
+      final lista = (value as List).map((e) => Designacao.fromJson(Map<String, dynamic>.from(e))).toList();
+      _dados[key] = lista;
+    });
+    notifyListeners();
+  }
+
+  Future<void> _salvar() async {
+    final out = <String, dynamic>{};
+    _dados.forEach((k, v) {
+      out[k] = v.map((d) => d.toJson()).toList();
+    });
+    await Cloud.salvar('designacoes', {'dados': out});
   }
 
   String ultimaDataConclusao(String territorio) {
@@ -196,6 +295,7 @@ class DesignacaoStore extends ChangeNotifier {
   }
 }
 
+// ============== OBSERVAÇÕES ==============
 class ObsStore extends ChangeNotifier {
   static final ObsStore instance = ObsStore._();
   ObsStore._();
@@ -204,9 +304,19 @@ class ObsStore extends ChangeNotifier {
   void set(String territorio, String texto) {
     _obs[territorio] = texto;
     notifyListeners();
+    _salvar();
+  }
+  void carregar(Map<String, dynamic> dados) {
+    _obs.clear();
+    dados.forEach((k, v) => _obs[k] = v.toString());
+    notifyListeners();
+  }
+  Future<void> _salvar() async {
+    await Cloud.salvar('observacoes', {'dados': _obs});
   }
 }
 
+// ============== DIRIGENTES ==============
 class DirigentesStore {
   static List<List<String>> nomes = [
     ['Irmão João Silva', 'Irmão Pedro Santos', 'Irmão Carlos Souza'],
@@ -221,41 +331,66 @@ class DirigentesStore {
       nomes[coluna].add('');
     }
     nomes[coluna][index] = valor;
+    Cloud.salvar('dirigentes', {'nomes': nomes});
+  }
+  static void carregar(List<List<String>> dados) {
+    if (dados.isEmpty) return;
+    nomes = dados;
   }
 }
 
+// ============== BOTÃO SALVAR ==============
 class BotaoSalvar extends StatelessWidget {
   const BotaoSalvar({super.key});
-  void _salvar(BuildContext context) {
+  Future<void> _salvar(BuildContext context) async {
     AppState.instance.save();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(children: [
-          const Icon(Icons.check_circle, color: Colors.white, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text('Salvo: ${AppState.instance.lastSavedText}',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-          ),
-        ]),
-        backgroundColor: C.verde,
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(12),
-      ),
-    );
+    // Envia tudo pra nuvem
+    await Cloud.salvar('territorios', {
+      'lista': TerritoriosStore.instance.lista.map((t) => t.toJson()).toList(),
+    });
+    await Cloud.salvar('admins', {'senhas': AuthStore.instance.admins});
+    await Cloud.salvar('dirigentes', {'nomes': DirigentesStore.nomes});
+    final dOut = <String, dynamic>{};
+    for (int i = 0; i < 4; i++) {}
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(children: [
+            Icon(
+              Cloud.disponivel ? Icons.cloud_done : Icons.cloud_off,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                Cloud.disponivel
+                    ? 'Salvo na nuvem!'
+                    : 'Nuvem offline — salvando local',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+            ),
+          ]),
+          backgroundColor: Cloud.disponivel ? C.verde : C.amarelo,
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: const EdgeInsets.all(12),
+        ),
+      );
+    }
   }
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      tooltip: 'Salvar',
+      tooltip: 'Salvar na nuvem',
       icon: const Icon(Icons.save, color: Colors.white),
       onPressed: () => _salvar(context),
     );
   }
 }
 
+// ============== BADGE USUÁRIO ==============
 class BadgeUsuario extends StatelessWidget {
   const BadgeUsuario({super.key});
   @override
