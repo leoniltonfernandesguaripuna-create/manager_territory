@@ -9,10 +9,10 @@ class Cloud {
   try {
     await Firebase.initializeApp();
     _pronto = true;
-    print('✅ Firebase inicializado com sucesso!');
+    print('✅ FIREBASE OK');
   } catch (e) {
     _pronto = false;
-    print('❌ Erro ao inicializar Firebase: $e');
+    print('❌ ERRO FIREBASE: $e');
   }
 }
 
