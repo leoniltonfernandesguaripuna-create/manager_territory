@@ -2,7 +2,7 @@
   "project_info": {
     "project_number": "159513090592",
     "project_id": "manager-territory",
-    ...
+    ...   ← FALTA COISA AQUI
   },
   "client": [{
     "client_info": {
@@ -10,7 +10,7 @@
         "package_name": "com.leonilton.manager_territory"
       }
     },
-    ...
+    ...   ← FALTA COISA AQUI
   }],
   "configuration_version": "1"
 }
