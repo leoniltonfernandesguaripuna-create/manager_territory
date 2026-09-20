@@ -2,15 +2,28 @@
   "project_info": {
     "project_number": "159513090592",
     "project_id": "manager-territory",
-    ...   ← FALTA COISA AQUI
+    "storage_bucket": "manager-territory.firebasestorage.app"
   },
-  "client": [{
-    "client_info": {
-      "android_client_info": {
-        "package_name": "com.leonilton.manager_territory"
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:159513090592:android:b79708063b80b3f2a67a45",
+        "android_client_info": {
+          "package_name": "com.leonilton.manager_territory"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXeVnpapMgqruTiGp1oUab4DZocjo_R78"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
       }
-    },
-    ...   ← FALTA COISA AQUI
-  }],
+    }
+  ],
   "configuration_version": "1"
 }
