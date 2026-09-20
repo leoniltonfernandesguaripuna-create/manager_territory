@@ -4,13 +4,8 @@ workflows:
     max_build_duration: 60
     instance_type: linux_x2
     environment:
-      flutter: 3.24.0 # Fixa uma versão estável e compatível com o embedding v2
-      groups:
-        - firebase_credentials
+      flutter: 3.24.0
     scripts:
-      - name: Configurar google-services.json
-        script: |
-          echo $ANDROID_FIREBASE_SECRET > $CM_BUILD_DIR/android/app/google-services.json
       - name: Flutter pub get
         script: flutter pub get
       - name: Build APK release
