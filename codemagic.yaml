@@ -6,7 +6,12 @@ workflows:
         - firebase # se tiver algum grupo, deixe aqui
       vars:
         # Cole o texto Base64 longo aqui dentro das aspas:
-        GOOGLE_SERVICES_JSON: "COLE_AQUI_O_TEXTO_BASE64_LONGO"
+        GOOGLE_SERVICES_JSON: {
+  "file": {
+    "mime": "@file/json",
+    "data": "ewogICJwcm9qZWN0X2luZm8iOiB7CiAgICAicHJvamVjdF9udW1iZXIiOiAiMTU5NTEzMDkwNTkyIiwKICAgICJwcm9qZWN0X2lkIjogIm1hbmFnZXItdGVycml0b3J5IiwKICAgICJzdG9yYWdlX2J1Y2tldCI6ICJtYW5hZ2VyLXRlcnJpdG9yeS5maXJlYmFzZXN0b3JhZ2UuYXBwIgogIH0sCiAgImNsaWVudCI6IFsKICAgIHsKICAgICAgImNsaWVudF9pbmZvIjogewogICAgICAgICJtb2JpbGVzZGtfYXBwX2lkIjogIjE6MTU5NTEzMDkwNTkyOmFuZHJvaWQ6Yjc5NzA4MDYzYjgwYjNmMmE2N2E0NSIsCiAgICAgICAgImFuZHJvaWRfY2xpZW50X2luZm8iOiB7CiAgICAgICAgICAicGFja2FnZV9uYW1lIjogImNvbS5sZW9uaWx0b24ubWFuYWdlcl90ZXJyaXRvcnkiCiAgICAgICAgfQogICAgICB9LAogICAgICAib2F1dGhfY2xpZW50IjogW10sCiAgICAgICJhcGlfa2V5IjogWwogICAgICAgIHsKICAgICAgICAgICJjdXJyZW50X2tleSI6ICJBSXphU3lEWGVWbnBhcE1ncXJ1VGlHcDFvVWFiNERab2Nqb19SNzgiCiAgICAgICAgfQogICAgICBdLAogICAgICAic2VydmljZXMiOiB7CiAgICAgICAgImFwcGludml0ZV9zZXJ2aWNlIjogewogICAgICAgICAgIm90aGVyX3BsYXRmb3JtX29hdXRoX2NsaWVudCI6IFtdCiAgICAgICAgfQogICAgICB9CiAgICB9CiAgXSwKICAiY29uZmlndXJhdGlvbl92ZXJzaW9uIjogIjEiCn0="
+  }
+}
       flutter: stable
     scripts:
       - name: Decompress Google Services JSON
