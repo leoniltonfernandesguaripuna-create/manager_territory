@@ -1,38 +1,13 @@
 workflows:
-  flutter-app-workflow:
-    name: Flutter Build Workflow
+  android-release:
+    name: Android Release Firebase
     max_build_duration: 60
-    instance_type: mac_mini_m1
     environment:
-      flutter: stable
-      xcode: latest
-      cocoapods: default
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: main
-          include: true
+      flutter: 3.47.5
     scripts:
-      - name: Get Flutter packages
-        script: | 
-          flutter packages pub get
-      - name: Flutter analyze
-        script: | 
-          flutter analyze
-      - name: Flutter unit tests
-        script: | 
-          flutter test
-      - name: Build Android APK
-        script: | 
-          flutter build apk --release
-      - name: Build iOS IPA
-        script: | 
-          flutter build ipa --release --no-codesign
+      - name: Flutter pub get
+        script: flutter pub get
+      - name: Build APK release
+        script: flutter build apk --release
     artifacts:
-      - build/app/outputs/flutter-apk/*-release.apk
-      - build/ios/ipa/*.ipa
-    publishing:
-      email:
-        recipients:
-          - seu-email@dominio.com
+      - build/app/outputs/flutter-apk/app-release.apk
