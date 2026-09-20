@@ -16,11 +16,12 @@ class Cloud {
 
   static bool get disponivel => _pronto;
 
+  // 👇 id agora é OPCIONAL (default: 'principal')
   static Future<void> salvar(
     String colecao,
-    String id,
-    Map<String, dynamic> dados,
-  ) async {
+    Map<String, dynamic> dados, [
+    String id = 'principal',
+  ]) async {
     if (!_pronto) return;
     try {
       await _db.collection(colecao).doc(id).set(
@@ -30,7 +31,11 @@ class Cloud {
     } catch (_) {}
   }
 
-  static Future<Map<String, dynamic>?> ler(String colecao, String id) async {
+  // 👇 id agora é OPCIONAL (default: 'principal')
+  static Future<Map<String, dynamic>?> ler(
+    String colecao, [
+    String id = 'principal',
+  ]) async {
     if (!_pronto) return null;
     try {
       final doc = await _db.collection(colecao).doc(id).get();
@@ -40,6 +45,7 @@ class Cloud {
     }
   }
 
+  // Atalhos que já existiam
   static Future<Map<String, dynamic>?> lerDoc(String colecao) =>
       ler(colecao, 'principal');
 
