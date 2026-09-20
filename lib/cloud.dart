@@ -16,10 +16,17 @@ class Cloud {
 
   static bool get disponivel => _pronto;
 
-  static Future<void> salvar(String colecao, String id, Map<String, dynamic> dados) async {
+  static Future<void> salvar(
+    String colecao,
+    String id,
+    Map<String, dynamic> dados,
+  ) async {
     if (!_pronto) return;
     try {
-      await _db.collection(colecao).doc(id).set(dados);
+      await _db.collection(colecao).doc(id).set(
+            dados,
+            SetOptions(merge: true),
+          );
     } catch (_) {}
   }
 
@@ -32,4 +39,11 @@ class Cloud {
       return null;
     }
   }
+
+  // ✅ ATALHOS: usam 'principal' como id fixo (chamados pelo main.dart)
+  static Future<Map<String, dynamic>?> lerDoc(String colecao) =>
+      ler(colecao, 'principal');
+
+  static Future<void> salvarDoc(String colecao, Map<String, dynamic> dados) =>
+      salvar(colecao, 'principal', dados);
 }
