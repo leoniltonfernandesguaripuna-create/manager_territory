@@ -1,0 +1,68 @@
+
+  "project_info": {
+    "project_number": "585823373791",
+    "firebase_url": "https://territory-manager-5a7c5-default-rtdb.firebaseio.com",
+    "project_id": "territory-manager-5a7c5",
+    "storage_bucket": "territory-manager-5a7c5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:585823373791:android:a2465038f0617fdee89c6a",
+        "android_client_info": {
+          "package_name": "com.example.territory_manager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-UlpscaF5Sr-7lcZV1NXKs4kimwPXLK0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:585823373791:android:a85f5fd1d39380c7e89c6a",
+        "android_client_info": {
+          "package_name": "territorio.manage"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-UlpscaF5Sr-7lcZV1NXKs4kimwPXLK0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:585823373791:android:9d039bf6cf001e08e89c6a",
+        "android_client_info": {
+          "package_name": "territory.manager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-UlpscaF5Sr-7lcZV1NXKs4kimwPXLK0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
