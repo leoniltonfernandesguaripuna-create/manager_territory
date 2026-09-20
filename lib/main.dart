@@ -3206,7 +3206,4 @@ class _LinhaServico {
     this.local = '',
     this.dirigente = '',
   });
- )
-
-  
 }
