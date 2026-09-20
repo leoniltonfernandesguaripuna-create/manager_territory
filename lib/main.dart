@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'cloud.dart';
 
 Future<void> main() async {
@@ -34,6 +35,16 @@ Future<void> _carregarDados() async {
     final adm = await Cloud.ler('admins');
     if (adm != null && adm['senhas'] != null) {
       AuthStore.instance.carregarAdmins(Map<String, String>.from(adm['senhas']));
+    }
+    // 👇 NOVO: carrega Serviço de Campo
+    final sc = await Cloud.ler('servico_campo');
+    if (sc != null && sc['locais'] != null) {
+      ServicoCampoStore.instance.carregar(Map<String, dynamic>.from(sc['locais']));
+    }
+    // 👇 NOVO: carrega Eventos
+    final ev = await Cloud.ler('eventos');
+    if (ev != null && ev['dados'] != null) {
+      EventosStore.instance.carregar(Map<String, dynamic>.from(ev['dados']));
     }
   } catch (_) {}
 }
@@ -336,6 +347,85 @@ class DirigentesStore {
   }
 }
 
+// ============== SERVIÇO DE CAMPO STORE ==============
+class ServicoCampoStore extends ChangeNotifier {
+  static final ServicoCampoStore instance = ServicoCampoStore._();
+  ServicoCampoStore._();
+  final Map<String, String> locais = {};
+  Timer? _debounce;
+
+  void setLocal(String dataKey, String valor) {
+    locais[dataKey] = valor;
+    notifyListeners();
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 800), _salvar);
+  }
+
+  void carregar(Map<String, dynamic> dados) {
+    locais.clear();
+    dados.forEach((k, v) => locais[k] = v.toString());
+    notifyListeners();
+  }
+
+  Future<void> _salvar() async {
+    await Cloud.salvar('servico_campo', {'locais': locais});
+  }
+}
+
+// ============== EVENTOS STORE ==============
+class EventosStore extends ChangeNotifier {
+  static final EventosStore instance = EventosStore._();
+  EventosStore._();
+  final Map<String, dynamic> _dados = {};
+  Timer? _debounceNome;
+
+  Map<String, dynamic> get(int l, int g) =>
+      (_dados['${l}_$g'] as Map?)?.cast<String, dynamic>() ??
+      {'nome': '', 'dias': 0, 'pg': false};
+
+  void setNome(int l, int g, String nome) {
+    final k = '${l}_$g';
+    final d = Map<String, dynamic>.from(get(l, g));
+    d['nome'] = nome;
+    _dados[k] = d;
+    notifyListeners();
+    _debounceNome?.cancel();
+    _debounceNome = Timer(const Duration(milliseconds: 800), _salvar);
+  }
+
+  void toggleDia(int l, int g, int bit) {
+    final k = '${l}_$g';
+    final d = Map<String, dynamic>.from(get(l, g));
+    d['dias'] = (d['dias'] as int) ^ bit;
+    _dados[k] = d;
+    notifyListeners();
+    _salvar();
+  }
+
+  void togglePg(int l, int g) {
+    final k = '${l}_$g';
+    final d = Map<String, dynamic>.from(get(l, g));
+    d['pg'] = !(d['pg'] as bool);
+    _dados[k] = d;
+    notifyListeners();
+    _salvar();
+  }
+
+  void carregar(Map<String, dynamic> dados) {
+    _dados.clear();
+    dados.forEach((k, v) {
+      if (v is Map) {
+        _dados[k] = Map<String, dynamic>.from(v);
+      }
+    });
+    notifyListeners();
+  }
+
+  Future<void> _salvar() async {
+    await Cloud.salvar('eventos', {'dados': _dados});
+  }
+}
+
 // ============== BOTÃO SALVAR ==============
 class BotaoSalvar extends StatelessWidget {
   const BotaoSalvar({super.key});
@@ -346,6 +436,10 @@ class BotaoSalvar extends StatelessWidget {
     });
     await Cloud.salvar('admins', {'senhas': AuthStore.instance.admins});
     await Cloud.salvar('dirigentes', {'nomes': DirigentesStore.nomes});
+    // 👇 NOVO: salva Serviço de Campo
+    await Cloud.salvar('servico_campo', {'locais': ServicoCampoStore.instance.locais});
+    // 👇 NOVO: salva Eventos
+    await Cloud.salvar('eventos', {'dados': EventosStore.instance._dados});
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -358,9 +452,7 @@ class BotaoSalvar extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                Cloud.disponivel
-                    ? 'Salvo na nuvem!'
-                    : 'Nuvem offline',
+                Cloud.disponivel ? 'Salvo na nuvem!' : 'Nuvem offline',
                 style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ),
@@ -1386,17 +1478,19 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
   @override
   void initState() {
     super.initState();
-    AuthStore.instance.addListener(_onAuth);
+    AuthStore.instance.addListener(_onChanged);
+    ServicoCampoStore.instance.addListener(_onChanged);
     _linhas = _gerarLinhas(_ano, _mes);
   }
 
   @override
   void dispose() {
-    AuthStore.instance.removeListener(_onAuth);
+    AuthStore.instance.removeListener(_onChanged);
+    ServicoCampoStore.instance.removeListener(_onChanged);
     super.dispose();
   }
 
-  void _onAuth() {
+  void _onChanged() {
     if (mounted) setState(() {});
   }
 
@@ -1452,7 +1546,9 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
           idxGrupoDomingo++;
         }
       }
+      final dataKey = '$ano-${mes.toString().padLeft(2, '0')}-${dia.toString().padLeft(2, '0')}';
       linhas.add(_LinhaServico(
+        dataKey: dataKey,
         mes: '${dia.toString().padLeft(2, '0')}/${mes.toString().padLeft(2, '0')}',
         semana: nomesSemana[diaSemana - 1],
         horario: horario,
@@ -1696,12 +1792,8 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
                 fontWeight: FontWeight.bold)),
       );
     }
-    return _celEditavel(largura, 'Local', (v) => l.local = v, corTexto: corTexto);
-  }
-
-  Widget _celEditavel(double largura, String hint, ValueChanged<String> onChanged,
-      {Color? corTexto}) {
     final pode = AuthStore.instance.podeEditarImportante;
+    final saved = ServicoCampoStore.instance.locais[l.dataKey] ?? '';
     return Container(
       width: largura,
       height: hLinha,
@@ -1712,14 +1804,18 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
         ),
       ),
       child: TextField(
-        onChanged: pode ? onChanged : null,
+        controller: TextEditingController(text: saved)
+          ..selection = TextSelection.collapsed(offset: saved.length),
+        onChanged: pode
+            ? (v) => ServicoCampoStore.instance.setLocal(l.dataKey, v)
+            : null,
         readOnly: !pode,
         textAlign: TextAlign.center,
         style: TextStyle(fontSize: 11, color: pode ? (corTexto ?? C.azul) : C.cinza),
         decoration: InputDecoration(
           border: InputBorder.none,
           isDense: true,
-          hintText: pode ? hint : '—',
+          hintText: pode ? 'Local' : '—',
           hintStyle: const TextStyle(fontSize: 10, color: C.cinza),
           contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         ),
@@ -2318,8 +2414,6 @@ class _EventosPageState extends State<EventosPage> {
   static const double hLinha = 44;
   static const double hHeader = 36;
 
-  late List<List<int>> _dias;
-  late List<List<bool>> _pg;
   late List<List<TextEditingController>> _nomes;
   bool _searchAtivo = false;
   final TextEditingController _searchController = TextEditingController();
@@ -2329,18 +2423,23 @@ class _EventosPageState extends State<EventosPage> {
   void initState() {
     super.initState();
     AuthStore.instance.addListener(_onAuth);
-    _dias = List.generate(totalLinhas, (_) => List.generate(totalGrupos, (_) => 0));
-    _pg = List.generate(totalLinhas, (_) => List.generate(totalGrupos, (_) => false));
+    EventosStore.instance.addListener(_onChanged);
     _nomes = List.generate(
       totalLinhas,
       (_) => List.generate(totalGrupos, (_) => TextEditingController()),
     );
+    for (int l = 0; l < totalLinhas; l++) {
+      for (int g = 0; g < totalGrupos; g++) {
+        _nomes[l][g].text = EventosStore.instance.get(l, g)['nome'] as String? ?? '';
+      }
+    }
     _searchController.addListener(_onSearch);
   }
 
   @override
   void dispose() {
     AuthStore.instance.removeListener(_onAuth);
+    EventosStore.instance.removeListener(_onChanged);
     for (final linha in _nomes) {
       for (final c in linha) {
         c.dispose();
@@ -2353,6 +2452,21 @@ class _EventosPageState extends State<EventosPage> {
 
   void _onAuth() {
     if (mounted) setState(() {});
+  }
+
+  void _onChanged() {
+    if (mounted) {
+      // Sincroniza os controllers com os dados da store
+      for (int l = 0; l < totalLinhas; l++) {
+        for (int g = 0; g < totalGrupos; g++) {
+          final salvo = EventosStore.instance.get(l, g)['nome'] as String? ?? '';
+          if (_nomes[l][g].text != salvo) {
+            _nomes[l][g].text = salvo;
+          }
+        }
+      }
+      setState(() {});
+    }
   }
 
   void _onSearch() {
@@ -2388,7 +2502,7 @@ class _EventosPageState extends State<EventosPage> {
       ));
       return;
     }
-    setState(() => _dias[l][g] ^= bit);
+    EventosStore.instance.toggleDia(l, g, bit);
   }
 
   void _togglePg(int l, int g) {
@@ -2400,7 +2514,7 @@ class _EventosPageState extends State<EventosPage> {
       ));
       return;
     }
-    setState(() => _pg[l][g] = !_pg[l][g]);
+    EventosStore.instance.togglePg(l, g);
   }
 
   @override
@@ -2603,7 +2717,11 @@ class _EventosPageState extends State<EventosPage> {
         controller: _nomes[l][g],
         textAlign: TextAlign.center,
         readOnly: !pode,
-        onChanged: pode ? (_) => setState(() {}) : null,
+        onChanged: pode
+            ? (v) {
+                EventosStore.instance.setNome(l, g, v);
+              }
+            : null,
         style: TextStyle(fontSize: 11,
             color: pode ? C.azul : C.cinza,
             fontWeight: dest ? FontWeight.bold : FontWeight.normal),
@@ -2637,7 +2755,8 @@ class _EventosPageState extends State<EventosPage> {
   }
 
   Widget _botaoDia(int l, int g, int bit, String label) {
-    final ativo = (_dias[l][g] & bit) != 0;
+    final dias = EventosStore.instance.get(l, g)['dias'] as int? ?? 0;
+    final ativo = (dias & bit) != 0;
     return GestureDetector(
       onTap: () => _toggleDia(l, g, bit),
       child: Container(
@@ -2658,7 +2777,7 @@ class _EventosPageState extends State<EventosPage> {
   }
 
   Widget _celPg(int l, int g) {
-    final pago = _pg[l][g];
+    final pago = EventosStore.instance.get(l, g)['pg'] as bool? ?? false;
     return Container(
       width: wPg,
       height: hLinha,
@@ -3073,16 +3192,21 @@ class _ItemPermissao extends StatelessWidget {
 
 // ============== MODELO AUXILIAR ==============
 class _LinhaServico {
+  final String dataKey;
   final String mes;
   final String semana;
   final String horario;
   String local;
   String dirigente;
   _LinhaServico({
+    required this.dataKey,
     required this.mes,
     required this.semana,
     required this.horario,
     this.local = '',
     this.dirigente = '',
   });
+ )
+
+  
 }
