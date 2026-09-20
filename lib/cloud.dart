@@ -16,7 +16,6 @@ class Cloud {
 
   static bool get disponivel => _pronto;
 
-  // 👇 id agora é OPCIONAL (default: 'principal')
   static Future<void> salvar(
     String colecao,
     Map<String, dynamic> dados, [
@@ -31,7 +30,6 @@ class Cloud {
     } catch (_) {}
   }
 
-  // 👇 id agora é OPCIONAL (default: 'principal')
   static Future<Map<String, dynamic>?> ler(
     String colecao, [
     String id = 'principal',
@@ -45,10 +43,9 @@ class Cloud {
     }
   }
 
-  // Atalhos que já existiam
   static Future<Map<String, dynamic>?> lerDoc(String colecao) =>
       ler(colecao, 'principal');
 
   static Future<void> salvarDoc(String colecao, Map<String, dynamic> dados) =>
-      salvar(colecao, 'principal', dados);
+      salvar(colecao, dados);   // ✅ CORRIGIDO
 }
