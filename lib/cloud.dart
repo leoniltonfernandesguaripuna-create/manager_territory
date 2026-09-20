@@ -40,7 +40,6 @@ class Cloud {
     }
   }
 
-  // ✅ ATALHOS: usam 'principal' como id fixo (chamados pelo main.dart)
   static Future<Map<String, dynamic>?> lerDoc(String colecao) =>
       ler(colecao, 'principal');
 
