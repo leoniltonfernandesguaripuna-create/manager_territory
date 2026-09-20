@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application")
-    id("com.google.gms.google-services")   // <-- ADICIONADO
+    id("com.google.gms.google-services")
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -16,7 +16,7 @@ android {
 
     defaultConfig {
         applicationId = "com.leonilton.manager_territory"
-        minSdk = 23                         // <-- ALTERADO (era flutter.minSdkVersion)
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
