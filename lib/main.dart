@@ -346,7 +346,7 @@ class DirigentesStore {
 }
 void atualizarDirigentes() {
   // ... seu código que altera a lista atual ...
-  notifyListeners();
+  
   
   // 👇 ADICIONE ESTA LINHA PARA SALVAR AUTOMÁTICO:
   Cloud.salvar('dirigentes', {
