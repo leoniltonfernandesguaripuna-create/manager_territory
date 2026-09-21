@@ -1466,9 +1466,11 @@ Cloud.salvar('designacoes', {
                       onTap: () async {
         _alternarCelula(linha - 1, coluna - 1);
         // 👇 SALVAMENTO AUTOMÁTICO DAS QUADRAS NA NUVEM:
-        await Cloud.salvar('quadras_trabalhadas', {
-          'dados': DesignacaoStore.instance.getDadosGlobais(), // Usa a mesma estrutura unificada do seu banco
+                await Cloud.salvar('quadras_trabalhadas', {
+          'lista_quadras': _quadrasEstados,
+          'territorio': widget.territorio.numero,
         });
+
       },
       child: AnimatedContainer(
 
