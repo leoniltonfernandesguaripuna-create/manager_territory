@@ -1464,7 +1464,7 @@ Cloud.salvar('designacoes', {
               final estado = _quadrasEstados[linha - 1][coluna];
               return GestureDetector(
                             onTap: () async {
-        _alternarCelula(linha - 1, col - 1); // Garanta que os nomes das variáveis batam com seu código
+        _alternarCelula(linha - 1, coluna - 1); // Garanta que os nomes das variáveis batam com seu código
         await Cloud.salvar('quadras_trabalhadas', {
           widget.numero: _quadrasEstados, // 💡 Salva os dados usando o número do território como chave
         });
