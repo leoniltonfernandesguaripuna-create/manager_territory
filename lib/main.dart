@@ -1467,11 +1467,12 @@ Cloud.salvar('designacoes', {
         _alternarCelula(linha - 1, coluna - 1);
         // 👇 SALVAMENTO AUTOMÁTICO DAS QUADRAS NA NUVEM:
                 await Cloud.salvar('quadras_trabalhadas', {
+                  await Cloud.salvar('quadras_trabalhadas', {
           'lista_quadras': _quadrasEstados,
-          
-        });'territorio': widget.numero,
-
+          'territorio': widget.numero,
+        });
       },
+
       child: AnimatedContainer(
 
                   duration: const Duration(milliseconds: 150),
