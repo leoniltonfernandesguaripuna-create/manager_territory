@@ -436,7 +436,7 @@ class BotaoSalvar extends StatefulWidget {
   State<BotaoSalvar> createState() => _BotaoSalvarState();
 }
 
-class _BotaoSalvarStates extends State<BotaoSalvar> {
+class _BotaoSalvarState extends State<BotaoSalvar> {
   bool _salvando = false;
 
   Future<void> _dispararSalvamento() async {
