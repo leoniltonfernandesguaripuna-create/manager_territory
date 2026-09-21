@@ -344,6 +344,15 @@ class DirigentesStore {
     nomes = dados;
   }
 }
+void atualizarDirigentes() {
+  // ... seu código que altera a lista atual ...
+  notifyListeners();
+  
+  // 👇 ADICIONE ESTA LINHA PARA SALVAR AUTOMÁTICO:
+  Cloud.salvar('dirigentes', {
+    'nomes': DirigentesStore.nomes, // Troque 'nomes' pela variável real da sua lista se for diferente
+  });
+}
 
 // ============== SERVIÇO DE CAMPO STORE ==============
 class ServicoCampoStore extends ChangeNotifier {
@@ -987,6 +996,11 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
     _ctrlNome.clear();
     _ctrlDataInicial.clear();
     _ctrlDataConclusao.clear();
+    // 👇 COLOQUE ESTA LINHA LOGO ABAIXO DA LINHA 997:
+Cloud.salvar('designacoes', {
+  'dados': DesignacaoStore.instance.getDadosGlobais(), // Ajuste para a variável de mapa da sua Store se necessário
+});
+
   }
   void _concluirDesignacao() {
     final data = _ctrlDataConclusao.text.trim();
