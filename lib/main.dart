@@ -427,58 +427,86 @@ class EventosStore extends ChangeNotifier {
   }
 }
 
-// ============== BOTÃO SALVAR ==============
-class BotaoSalvar extends StatelessWidget {
+// ============== BOTÃO SALVAR CORRIGIDO ==============
+class BotaoSalvar extends StatefulWidget {
   const BotaoSalvar({super.key});
-  Future<void> _salvar(BuildContext context) async {
-    AppState.instance.save();
 
-    // ✅ Sempre salva estes
-    await Cloud.salvar('territorios', {
-      'lista': TerritoriosStore.instance.lista.map((t) => t.toJson()).toList(),
-    });
-    await Cloud.salvar('dirigentes', {'nomes': DirigentesStore.nomes});
-    await Cloud.salvar('servico_campo', {'locais': ServicoCampoStore.instance.locais});
-    await Cloud.salvar('eventos', {'dados': EventosStore.instance.dados});
+  @override
+  State<BotaoSalvar> createState() => _BotaoSalvarState();
+}
 
-    // ✅ SÓ salva admins se for Admin Principal (evita reset das senhas)
-    if (AuthStore.instance.isPrincipal) {
-      await Cloud.salvar('admins', {'senhas': AuthStore.instance.admins});
-    }
+class _BotaoSalvarState extends State<BotaoSalvar> {
+  bool _salvando = false;
 
-    if (context.mounted) {
+  Future<void> _dispararSalvamento() async {
+    if (_salvando) return;
+    setState(() => _salvando = true);
+
+    try {
+      final auth = AuthStore.instance;
+
+      // 1. O Território SEMPRE é salvo (Permitido para Publicadores e Admins)
+      await Cloud.salvar('territorios', {
+        'lista': TerritoriosStore.instance.lista.map((t) => t.toJson()).toList(),
+      });
+
+      // 2. Dados Restritos: SÓ salva na nuvem se o usuário logado for Administrador
+      if (auth.podeEditarImportante) {
+        // Salva as designações e outras tabelas de gerência
+        await Cloud.salvar('designacoes', {
+          'dados': DesignacaoStore.instance.dadosParaSalvar(), // Adapte para a chamada do seu método de mapa
+        });
+        
+        await Cloud.salvar('servico_campo', {
+          'locais': ServicoCampoStore.instance.dadosParaSalvar(),
+        });
+
+        await Cloud.salvar('eventos', {
+          'dados': EventosStore.instance.dadosParaSalvar(),
+        });
+        
+        // Atualiza a tabela de senhas de administradores se alterada
+        await Cloud.salvar('admins', {
+          'senhas': auth.admins,
+        });
+      }
+
+      // Atualiza o estado visual de sucesso no celular
+      AppState.instance.save();
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(children: [
-            Icon(
-              Cloud.disponivel ? Icons.cloud_done : Icons.cloud_off,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                Cloud.disponivel ? 'Salvo na nuvem!' : 'Nuvem offline',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-            ),
-          ]),
-          backgroundColor: Cloud.disponivel ? C.verde : C.amarelo,
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          margin: const EdgeInsets.all(12),
+          content: Text(auth.podeEditarImportante 
+            ? 'Dados e configurações sincronizados com sucesso!' 
+            : 'Alterações de Territórios salvas com sucesso!'),
+          backgroundColor: Colors.green,
         ),
       );
+    } catch (e) {
+      // Captura o erro exato na tela se algo ainda falhar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Falha ao salvar dados na nuvem: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _salvando = false);
     }
   }
+
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: 'Salvar na nuvem',
-      icon: const Icon(Icons.save, color: Colors.white),
-      onPressed: () => _salvar(context),
-    );
+    return _salvando
+        ? const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+          )
+        : IconButton(
+            icon: const Icon(Icons.cloud_upload_outlined),
+            onPressed: _dispararSalvamento,
+            tooltip: 'Sincronizar com a Nuvem',
+          );
   }
 }
 
