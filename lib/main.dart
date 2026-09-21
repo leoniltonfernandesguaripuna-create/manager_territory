@@ -1468,8 +1468,8 @@ Cloud.salvar('designacoes', {
         // 👇 SALVAMENTO AUTOMÁTICO DAS QUADRAS NA NUVEM:
                 await Cloud.salvar('quadras_trabalhadas', {
           'lista_quadras': _quadrasEstados,
-          'territorio': widget.territorio.numero,
-        });
+          
+        });'territorio': widget.numero,
 
       },
       child: AnimatedContainer(
