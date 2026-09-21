@@ -427,7 +427,8 @@ class EventosStore extends ChangeNotifier {
   }
 }
 
-// ============== BOTÃO SALVAR CORRIGIDO ==============
+
+// ============== BOTÃO SALVAR CORRIGIDO E SEGURO ==============
 class BotaoSalvar extends StatefulWidget {
   const BotaoSalvar({super.key});
 
@@ -435,7 +436,7 @@ class BotaoSalvar extends StatefulWidget {
   State<BotaoSalvar> createState() => _BotaoSalvarState();
 }
 
-class _BotaoSalvarState extends State<BotaoSalvar> {
+class _SalvandoState extends State<BotaoSalvar> {
   bool _salvando = false;
 
   Future<void> _dispararSalvamento() async {
@@ -445,49 +446,34 @@ class _BotaoSalvarState extends State<BotaoSalvar> {
     try {
       final auth = AuthStore.instance;
 
-      // 1. O Território SEMPRE é salvo (Permitido para Publicadores e Admins)
+      // 1. Envia as alterações dos Territórios (Liberado para todos os usuários)
       await Cloud.salvar('territorios', {
         'lista': TerritoriosStore.instance.lista.map((t) => t.toJson()).toList(),
       });
 
-      // 2. Dados Restritos: SÓ salva na nuvem se o usuário logado for Administrador
+      // 2. Se for Administrador, atualiza também a tabela de senhas se houver troca
       if (auth.podeEditarImportante) {
-        // Salva as designações e outras tabelas de gerência
-        await Cloud.salvar('designacoes', {
-          'dados': DesignacaoStore.instance.dadosParaSalvar(), // Adapte para a chamada do seu método de mapa
-        });
-        
-        await Cloud.salvar('servico_campo', {
-          'locais': ServicoCampoStore.instance.dadosParaSalvar(),
-        });
-
-        await Cloud.salvar('eventos', {
-          'dados': EventosStore.instance.dadosParaSalvar(),
-        });
-        
-        // Atualiza a tabela de senhas de administradores se alterada
         await Cloud.salvar('admins', {
           'senhas': auth.admins,
         });
       }
 
-      // Atualiza o estado visual de sucesso no celular
+      // Atualiza o aviso de horário na tela
       AppState.instance.save();
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(auth.podeEditarImportante 
-            ? 'Dados e configurações sincronizados com sucesso!' 
+            ? 'Dados sincronizados com sucesso!' 
             : 'Alterações de Territórios salvas com sucesso!'),
-          backgroundColor: Colors.green,
+          backgroundColor: const Color(0xFF2F855A), // Verde do seu app
         ),
       );
     } catch (e) {
-      // Captura o erro exato na tela se algo ainda falhar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Falha ao salvar dados na nuvem: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          content: Text('Erro ao salvar na nuvem: ${e.toString()}'),
+          backgroundColor: const Color(0xFFC53030), // Vermelho do seu app
         ),
       );
     } finally {
@@ -500,7 +486,11 @@ class _BotaoSalvarState extends State<BotaoSalvar> {
     return _salvando
         ? const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
-            child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+            ),
           )
         : IconButton(
             icon: const Icon(Icons.cloud_upload_outlined),
