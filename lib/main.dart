@@ -1463,8 +1463,15 @@ Cloud.salvar('designacoes', {
               }
               final estado = _quadrasEstados[linha - 1][coluna];
               return GestureDetector(
-                onTap: () => _alternarCelula(linha - 1, coluna),
-                child: AnimatedContainer(
+                      onTap: () async {
+        _alternarCelula(linha - 1, coluna - 1);
+        // 👇 SALVAMENTO AUTOMÁTICO DAS QUADRAS NA NUVEM:
+        await Cloud.salvar('quadras_trabalhadas', {
+          'dados': DesignacaoStore.instance.getDadosGlobais(), // Usa a mesma estrutura unificada do seu banco
+        });
+      },
+      child: AnimatedContainer(
+
                   duration: const Duration(milliseconds: 150),
                   width: w,
                   height: h,
