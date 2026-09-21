@@ -36,12 +36,10 @@ Future<void> _carregarDados() async {
     if (adm != null && adm['senhas'] != null) {
       AuthStore.instance.carregarAdmins(Map<String, String>.from(adm['senhas']));
     }
-    // 👇 NOVO: carrega Serviço de Campo
     final sc = await Cloud.ler('servico_campo');
     if (sc != null && sc['locais'] != null) {
       ServicoCampoStore.instance.carregar(Map<String, dynamic>.from(sc['locais']));
     }
-    // 👇 NOVO: carrega Eventos
     final ev = await Cloud.ler('eventos');
     if (ev != null && ev['dados'] != null) {
       EventosStore.instance.carregar(Map<String, dynamic>.from(ev['dados']));
@@ -379,6 +377,9 @@ class EventosStore extends ChangeNotifier {
   final Map<String, dynamic> _dados = {};
   Timer? _debounceNome;
 
+  // ✅ Getter público pro BotaoSalvar
+  Map<String, dynamic> get dados => _dados;
+
   Map<String, dynamic> get(int l, int g) =>
       (_dados['${l}_$g'] as Map?)?.cast<String, dynamic>() ??
       {'nome': '', 'dias': 0, 'pg': false};
@@ -431,15 +432,20 @@ class BotaoSalvar extends StatelessWidget {
   const BotaoSalvar({super.key});
   Future<void> _salvar(BuildContext context) async {
     AppState.instance.save();
+
+    // ✅ Sempre salva estes
     await Cloud.salvar('territorios', {
       'lista': TerritoriosStore.instance.lista.map((t) => t.toJson()).toList(),
     });
-    await Cloud.salvar('admins', {'senhas': AuthStore.instance.admins});
     await Cloud.salvar('dirigentes', {'nomes': DirigentesStore.nomes});
-    // 👇 NOVO: salva Serviço de Campo
     await Cloud.salvar('servico_campo', {'locais': ServicoCampoStore.instance.locais});
-    // 👇 NOVO: salva Eventos
-    await Cloud.salvar('eventos', {'dados': EventosStore.instance._dados});
+    await Cloud.salvar('eventos', {'dados': EventosStore.instance.dados});
+
+    // ✅ SÓ salva admins se for Admin Principal (evita reset das senhas)
+    if (AuthStore.instance.isPrincipal) {
+      await Cloud.salvar('admins', {'senhas': AuthStore.instance.admins});
+    }
+
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -684,7 +690,7 @@ class _HomePageState extends State<HomePage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: const [
+        const Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Text('Visão Geral do Território',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: C.azul)),
           Icon(Icons.chevron_right, color: C.cinza),
@@ -694,7 +700,8 @@ class _HomePageState extends State<HomePage> {
           height: 150,
           decoration: BoxDecoration(color: C.bege, borderRadius: BorderRadius.circular(12)),
           child: Stack(children: [
-            Center(child: Icon(Icons.map_outlined, size: 60, color: C.cinza.withOpacity(0.6))),
+            // ✅ withOpacity → withValues
+            Center(child: Icon(Icons.map_outlined, size: 60, color: C.cinza.withValues(alpha: 0.6))),
             const Positioned(top: 25, left: 40,
                 child: Icon(Icons.location_on, color: C.azul, size: 28)),
             const Positioned(top: 70, right: 80,
@@ -710,7 +717,7 @@ class _HomePageState extends State<HomePage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: const [
+      child: const Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Text('Notas recentes do serviço',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: C.azul)),
         SizedBox(height: 12),
@@ -1225,7 +1232,8 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
       child: _fotoMapa != null
           ? Image.network(_fotoMapa!, fit: BoxFit.cover)
           : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Icon(Icons.image_outlined, size: 60, color: C.cinza.withOpacity(0.6)),
+              // ✅ withOpacity → withValues
+              Icon(Icons.image_outlined, size: 60, color: C.cinza.withValues(alpha: 0.6)),
               const SizedBox(height: 10),
               const Text('Nenhuma foto do mapa',
                   style: TextStyle(fontSize: 13, color: C.cinza)),
@@ -1546,6 +1554,7 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
           idxGrupoDomingo++;
         }
       }
+      // ✅ Chave única por dia
       final dataKey = '$ano-${mes.toString().padLeft(2, '0')}-${dia.toString().padLeft(2, '0')}';
       linhas.add(_LinhaServico(
         dataKey: dataKey,
@@ -1771,6 +1780,7 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
     );
   }
 
+  // ✅ AGORA usa ServicoCampoStore
   Widget _celLocal(_LinhaServico l, double largura, Color? corTexto) {
     if (l.semana == 'Dom') {
       return Container(
@@ -2428,6 +2438,7 @@ class _EventosPageState extends State<EventosPage> {
       totalLinhas,
       (_) => List.generate(totalGrupos, (_) => TextEditingController()),
     );
+    // ✅ Carrega nomes salvos da store
     for (int l = 0; l < totalLinhas; l++) {
       for (int g = 0; g < totalGrupos; g++) {
         _nomes[l][g].text = EventosStore.instance.get(l, g)['nome'] as String? ?? '';
@@ -2454,9 +2465,9 @@ class _EventosPageState extends State<EventosPage> {
     if (mounted) setState(() {});
   }
 
+  // ✅ Sincroniza controllers com a store (para carregar dados da nuvem)
   void _onChanged() {
     if (mounted) {
-      // Sincroniza os controllers com os dados da store
       for (int l = 0; l < totalLinhas; l++) {
         for (int g = 0; g < totalGrupos; g++) {
           final salvo = EventosStore.instance.get(l, g)['nome'] as String? ?? '';
@@ -2493,6 +2504,7 @@ class _EventosPageState extends State<EventosPage> {
     return ((g * totalLinhas) + l + 1).toString().padLeft(2, '0');
   }
 
+  // ✅ Salva na store
   void _toggleDia(int l, int g, int bit) {
     if (!AuthStore.instance.podeEditarImportante) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -2505,6 +2517,7 @@ class _EventosPageState extends State<EventosPage> {
     EventosStore.instance.toggleDia(l, g, bit);
   }
 
+  // ✅ Salva na store
   void _togglePg(int l, int g) {
     if (!AuthStore.instance.podeEditarImportante) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -2699,6 +2712,7 @@ class _EventosPageState extends State<EventosPage> {
     );
   }
 
+  // ✅ Salva nome na store
   Widget _celNome(int l, int g, bool pode) {
     final dest = _match(l, g);
     return Container(
@@ -2718,9 +2732,7 @@ class _EventosPageState extends State<EventosPage> {
         textAlign: TextAlign.center,
         readOnly: !pode,
         onChanged: pode
-            ? (v) {
-                EventosStore.instance.setNome(l, g, v);
-              }
+            ? (v) => EventosStore.instance.setNome(l, g, v)
             : null,
         style: TextStyle(fontSize: 11,
             color: pode ? C.azul : C.cinza,
@@ -2754,6 +2766,7 @@ class _EventosPageState extends State<EventosPage> {
     );
   }
 
+  // ✅ Lê dias da store
   Widget _botaoDia(int l, int g, int bit, String label) {
     final dias = EventosStore.instance.get(l, g)['dias'] as int? ?? 0;
     final ativo = (dias & bit) != 0;
@@ -2776,6 +2789,7 @@ class _EventosPageState extends State<EventosPage> {
     );
   }
 
+  // ✅ Lê PG da store
   Widget _celPg(int l, int g) {
     final pago = EventosStore.instance.get(l, g)['pg'] as bool? ?? false;
     return Container(
@@ -3192,7 +3206,7 @@ class _ItemPermissao extends StatelessWidget {
 
 // ============== MODELO AUXILIAR ==============
 class _LinhaServico {
-  final String dataKey;
+  final String dataKey;   // ✅ NOVO
   final String mes;
   final String semana;
   final String horario;
