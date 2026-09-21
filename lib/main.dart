@@ -998,7 +998,7 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
     _ctrlDataConclusao.clear();
     // 👇 COLOQUE ESTA LINHA LOGO ABAIXO DA LINHA 997:
 Cloud.salvar('designacoes', {
-  'dados': DesignacaoStore.instance.getDadosGlobais(), // Ajuste para a variável de mapa da sua Store se necessário
+  'dados': DesignacaoStore.instance.get(widget.numero, 0).toJson(),
 });
 
   }
