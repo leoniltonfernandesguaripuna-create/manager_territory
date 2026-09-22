@@ -13,10 +13,6 @@ dependencies:
   firebase_core: ^3.6.0
   cloud_firestore: ^5.4.
   
-  flutter:
-    sdk: flutter
-  image_picker: ^1.0.7 # ou a versão mais recente compatível
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
