@@ -2469,22 +2469,46 @@ class _EventosPageState extends State<EventosPage> {
   String _query = '';
 
   @override
-  void initState() {
-    super.initState();
-    AuthStore.instance.addListener(_onAuth);
-    EventosStore.instance.addListener(_onChanged);
-    _nomes = List.generate(
-      totalLinhas,
-      (_) => List.generate(totalGrupos, (_) => TextEditingController()),
-    );
-    // ✅ Carrega nomes salvos da store
-    for (int l = 0; l < totalLinhas; l++) {
-      for (int g = 0; g < totalGrupos; g++) {
-        _nomes[l][g].text = EventosStore.instance.get(l, g)['nome'] as String? ?? '';
+void initState() {
+  super.initState();
+  AuthStore.instance.addListener(_onAuth);
+  EventosStore.instance.addListener(_onChanged);
+  _nomes = List.generate(
+    totalLinhas,
+    (_) => List.generate(totalGrupos, (_) => TextEditingController()),
+  );
+  _searchController.addListener(_onSearch);
+  // ✅ Preenche com o que tem em memória
+  _preencherControllers();
+  // ✅ E busca dados fresquinhos do Firestore
+  _recarregarDoFirestore();
+}
+
+// Preenche os controllers a partir da store local
+void _preencherControllers() {
+  for (int l = 0; l < totalLinhas; l++) {
+    for (int g = 0; g < totalGrupos; g++) {
+      _nomes[l][g].text = EventosStore.instance.get(l, g)['nome'] as String? ?? '';
+    }
+  }
+}
+
+// ✅ NOVO: busca dados fresquinhos do Firestore ao abrir a tela
+Future<void> _recarregarDoFirestore() async {
+  if (!Cloud.disponivel) return;
+  try {
+    final ev = await Cloud.ler('eventos');
+    if (ev != null && ev['dados'] != null) {
+      EventosStore.instance.carregar(Map<String, dynamic>.from(ev['dados']));
+      if (mounted) {
+        _preencherControllers();
+        setState(() {});
       }
     }
-    _searchController.addListener(_onSearch);
+  } catch (e) {
+    debugPrint('Erro ao recarregar eventos: $e');
   }
+}
 
   @override
   void dispose() {
