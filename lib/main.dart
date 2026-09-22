@@ -27,11 +27,15 @@ Future<void> _carregarDados() async {
       ObsStore.instance.carregar(Map<String, dynamic>.from(obs['dados']));
     }
     final dir = await Cloud.ler('dirigentes');
-    if (dir != null && dir['nomes'] != null) {
-      DirigentesStore.carregar(List<List<String>>.from(
-        (dir['nomes'] as List).map((e) => List<String>.from(e)),
-      ));
-    }
+if (dir != null && dir['nomes'] != null) {
+  // ✅ Converte o mapa de volta → array de arrays
+  final nomesMap = Map<String, dynamic>.from(dir['nomes'] as Map);
+  final lista = List<List<String>>.generate(
+    3,
+    (i) => List<String>.from(nomesMap['$i'] ?? []),
+  );
+  DirigentesStore.carregar(lista);
+}
     final adm = await Cloud.ler('admins');
     if (adm != null && adm['senhas'] != null) {
       AuthStore.instance.carregarAdmins(Map<String, String>.from(adm['senhas']));
