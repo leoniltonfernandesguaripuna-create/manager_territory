@@ -434,6 +434,28 @@ class EventosStore extends ChangeNotifier {
     await Cloud.salvar('eventos', {'dados': _dados});
   }
 }
+// ============== MAPAS STORE ==============
+class MapasStore {
+  static final Map<String, String> _fotos = {};
+
+  static String? get(String territorio) => _fotos[territorio];
+
+  static void set(String territorio, String? base64) {
+    if (base64 == null || base64.isEmpty) {
+      _fotos.remove(territorio);
+    } else {
+      _fotos[territorio] = base64;
+    }
+    Cloud.salvar('mapas', {territorio: base64 ?? ''});
+  }
+
+  static void carregar(Map<String, dynamic> dados) {
+    _fotos.clear();
+    dados.forEach((k, v) {
+      if (v is String && v.isNotEmpty) _fotos[k] = v;
+    });
+  }
+}
 
 
 
