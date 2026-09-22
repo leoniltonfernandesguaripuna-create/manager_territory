@@ -1915,16 +1915,47 @@ class _DirigentePageState extends State<DirigentePage> {
   final List<String> _cabecalho = ['SEGUNDA A SEXTA', 'SÁBADO', 'DOMINGO'];
 
   @override
-  void initState() {
-    super.initState();
-    AuthStore.instance.addListener(_onAuth);
-    for (int coluna = 0; coluna < totalColunas; coluna++) {
-      final lista = DirigentesStore.nomes[coluna];
-      for (int i = 0; i < lista.length && i < (totalLinhas - 1); i++) {
-        _controllers[i + 1][coluna].text = lista[i];
-      }
+void initState() {
+  super.initState();
+  AuthStore.instance.addListener(_onAuth);
+  // ✅ Preenche com o que tem em memória
+  _preencherControllers();
+  // ✅ E busca dados fresquinhos do Firestore
+  _recarregarDoFirestore();
+}
+
+// Preenche os controllers a partir da store local
+void _preencherControllers() {
+  for (int coluna = 0; coluna < totalColunas; coluna++) {
+    // Limpa antes pra não duplicar
+    for (int i = 1; i < totalLinhas; i++) {
+      _controllers[i][coluna].text = '';
+    }
+    final lista = DirigentesStore.nomes[coluna];
+    for (int i = 0; i < lista.length && i < (totalLinhas - 1); i++) {
+      _controllers[i + 1][coluna].text = lista[i];
     }
   }
+}
+
+// ✅ NOVO: busca dados fresquinhos do Firestore ao abrir a tela
+Future<void> _recarregarDoFirestore() async {
+  if (!Cloud.disponivel) return;
+  try {
+    final dir = await Cloud.ler('dirigentes');
+    if (dir != null && dir['nomes'] != null) {
+      DirigentesStore.carregar(List<List<String>>.from(
+        (dir['nomes'] as List).map((e) => List<String>.from(e)),
+      ));
+      if (mounted) {
+        _preencherControllers();
+        setState(() {});
+      }
+    }
+  } catch (e) {
+    debugPrint('Erro ao recarregar dirigentes: $e');
+  }
+}
 
   @override
   void dispose() {
