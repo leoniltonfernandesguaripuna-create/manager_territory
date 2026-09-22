@@ -352,16 +352,6 @@ class DirigentesStore {
     if (dados.isEmpty) return;
     nomes = dados;
   }
-}
-void atualizarDirigentes() {
-  // ... seu código que altera a lista atual ...
-  
-  
-  // 👇 ADICIONE ESTA LINHA PARA SALVAR AUTOMÁTICO:
-  Cloud.salvar('dirigentes', {
-    'nomes': DirigentesStore.nomes, // Troque 'nomes' pela variável real da sua lista se for diferente
-  });
-}
 
 // ============== SERVIÇO DE CAMPO STORE ==============
 class ServicoCampoStore extends ChangeNotifier {
