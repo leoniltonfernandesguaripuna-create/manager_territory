@@ -436,6 +436,7 @@ class EventosStore extends ChangeNotifier {
 }
 
 
+
 // ============== BOTÃO SALVAR CORRIGIDO E SEGURO ==============
 class BotaoSalvar extends StatefulWidget {
   const BotaoSalvar({super.key});
@@ -454,34 +455,51 @@ class _BotaoSalvarState extends State<BotaoSalvar> {
     try {
       final auth = AuthStore.instance;
 
-      // 1. Envia as alterações dos Territórios (Liberado para todos os usuários)
+      // 1. Territórios (sempre)
       await Cloud.salvar('territorios', {
         'lista': TerritoriosStore.instance.lista.map((t) => t.toJson()).toList(),
       });
 
-      // 2. Se for Administrador, atualiza também a tabela de senhas se houver troca
+      // 2. Admins (só se for admin)
       if (auth.podeEditarImportante) {
-        await Cloud.salvar('admins', {
-          'senhas': auth.admins,
-        });
+        await Cloud.salvar('admins', {'senhas': auth.admins});
       }
+
+      // 3. Dirigentes (converte array → map)
+      final nomesMap = <String, dynamic>{};
+      for (int i = 0; i < DirigentesStore.nomes.length; i++) {
+        nomesMap['$i'] = DirigentesStore.nomes[i];
+      }
+      await Cloud.salvar('dirigentes', {'nomes': nomesMap});
+
+      // 4. Serviço de Campo
+      await Cloud.salvar('servico_campo', {
+        'locais': ServicoCampoStore.instance.locais,
+      });
+
+      // 5. Eventos
+      await Cloud.salvar('eventos', {
+        'dados': EventosStore.instance.dados,
+      });
 
       // Atualiza o aviso de horário na tela
       AppState.instance.save();
-      
+
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(auth.podeEditarImportante 
-            ? 'Dados sincronizados com sucesso!' 
-            : 'Alterações de Territórios salvas com sucesso!'),
-          backgroundColor: const Color(0xFF2F855A), // Verde do seu app
+          content: Text(auth.podeEditarImportante
+              ? 'Dados sincronizados com sucesso!'
+              : 'Alterações de Territórios salvas com sucesso!'),
+          backgroundColor: const Color(0xFF2F855A),
         ),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Erro ao salvar na nuvem: ${e.toString()}'),
-          backgroundColor: const Color(0xFFC53030), // Vermelho do seu app
+          content: Text('Erro ao salvar na nuvem: $e'),
+          backgroundColor: const Color(0xFFC53030),
         ),
       );
     } finally {
@@ -493,11 +511,14 @@ class _BotaoSalvarState extends State<BotaoSalvar> {
   Widget build(BuildContext context) {
     return _salvando
         ? const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: 12),
             child: SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
             ),
           )
         : IconButton(
@@ -507,7 +528,6 @@ class _BotaoSalvarState extends State<BotaoSalvar> {
           );
   }
 }
-
 // ============== BADGE USUÁRIO ==============
 class BadgeUsuario extends StatelessWidget {
   const BadgeUsuario({super.key});
