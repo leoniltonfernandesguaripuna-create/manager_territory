@@ -352,7 +352,7 @@ class DirigentesStore {
     if (dados.isEmpty) return;
     nomes = dados;
   }
-
+}
 // ============== SERVIÇO DE CAMPO STORE ==============
 class ServicoCampoStore extends ChangeNotifier {
   static final ServicoCampoStore instance = ServicoCampoStore._();
