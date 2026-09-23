@@ -1,13 +1,26 @@
 workflows:
-  android-release:
-    name: Android Release
+  flutter-build:
+    name: Flutter Android Build
     max_build_duration: 60
+    instance_type: mac_mini_m1
     environment:
       flutter: stable
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          filter_to_source: true
     scripts:
-      - name: Flutter pub get
-        script: flutter pub get
-      - name: Build APK release
+      - name: Get Flutter packages
+        script: flutter packages pub get
+      - name: Flutter build APK
         script: flutter build apk --release
     artifacts:
-      - build/app/outputs/flutter-apk/app-release.apk
+      - build/app/outputs/flutter-apk/*.apk
+    publishing:
+      email:
+        recipients:
+          - seu-email@dominio.com
+
+  
