@@ -13,7 +13,7 @@ workflows:
       
       - name: Criar o arquivo google-services json
         script: |
-          echo "$ANDROID_FIREBASE_SECRET" > android/app/google-services.json
+          echo "com.leonilton.msnsget_territory"> android/app/google-services.json
       
       - name: Get dependencies
         script: |
