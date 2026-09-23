@@ -1,24 +1,26 @@
 workflows:
-  flutter-build:
-    name: Flutter Android Build
+  android-workflow:
+    name: Android Build
     max_build_duration: 60
     instance_type: mac_mini_m1
     environment:
       groups:
         - firebase_credentials
-      flutter: stable
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: main
     scripts:
-      - name: Configure Google Services JSON
+      - name: Set up local.properties
         script: |
-          echo $GOOGLE_SERVICES_JSON > android/app/google-services.json
-      - name: Get Flutter packages
-        script: flutter packages pub get
-      - name: Flutter build APK
-        script: flutter build apk --release
+          echo "flutter.sdk=$HOME/programs/flutter" > android/local.properties
+      
+      - name: Criar o arquivo google-services json
+        script: |
+          echo "$ANDROID_FIREBASE_SECRET" > android/app/google-services.json
+      
+      - name: Get dependencies
+        script: |
+          flutter packages pub get
+      
+      - name: Build APK
+        script: |
+          flutter build apk --release
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
