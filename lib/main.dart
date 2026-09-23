@@ -29,15 +29,14 @@ Future<void> _carregarDados() async {
       ObsStore.instance.carregar(Map<String, dynamic>.from(obs['dados']));
     }
     final dir = await Cloud.ler('dirigentes');
-if (dir != null && dir['nomes'] != null) {
-  // ✅ Converte o mapa de volta → array de arrays
-  final nomesMap = Map<String, dynamic>.from(dir['nomes'] as Map);
-  final lista = List<List<String>>.generate(
-    3,
-    (i) => List<String>.from(nomesMap['$i'] ?? []),
-  );
-  DirigentesStore.carregar(lista);
-}
+    if (dir != null && dir['nomes'] != null) {
+      final nomesMap = Map<String, dynamic>.from(dir['nomes'] as Map);
+      final lista = List<List<String>>.generate(
+        3,
+        (i) => List<String>.from(nomesMap['$i'] ?? []),
+      );
+      DirigentesStore.carregar(lista);
+    }
     final adm = await Cloud.ler('admins');
     if (adm != null && adm['senhas'] != null) {
       AuthStore.instance.carregarAdmins(Map<String, String>.from(adm['senhas']));
@@ -49,6 +48,10 @@ if (dir != null && dir['nomes'] != null) {
     final ev = await Cloud.ler('eventos');
     if (ev != null && ev['dados'] != null) {
       EventosStore.instance.carregar(Map<String, dynamic>.from(ev['dados']));
+    }
+    final mapas = await Cloud.ler('mapas');
+    if (mapas != null) {
+      MapasStore.carregar(mapas);
     }
   } catch (_) {}
 }
@@ -339,22 +342,22 @@ class DirigentesStore {
     return nomes[coluna].map((n) => n.trim()).where((n) => n.isNotEmpty).toList();
   }
   static void setAt(int coluna, int index, String valor) {
-  while (nomes[coluna].length <= index) {
-    nomes[coluna].add('');
+    while (nomes[coluna].length <= index) {
+      nomes[coluna].add('');
+    }
+    nomes[coluna][index] = valor;
+    final nomesMap = <String, dynamic>{};
+    for (int i = 0; i < nomes.length; i++) {
+      nomesMap['$i'] = nomes[i];
+    }
+    Cloud.salvar('dirigentes', {'nomes': nomesMap});
   }
-  nomes[coluna][index] = valor;
-  // ✅ Converte array de arrays → mapa (Firestore aceita)
-  final nomesMap = <String, dynamic>{};
-  for (int i = 0; i < nomes.length; i++) {
-    nomesMap['$i'] = nomes[i];
-  }
-  Cloud.salvar('dirigentes', {'nomes': nomesMap});
-}
   static void carregar(List<List<String>> dados) {
     if (dados.isEmpty) return;
     nomes = dados;
   }
 }
+
 // ============== SERVIÇO DE CAMPO STORE ==============
 class ServicoCampoStore extends ChangeNotifier {
   static final ServicoCampoStore instance = ServicoCampoStore._();
@@ -387,7 +390,6 @@ class EventosStore extends ChangeNotifier {
   final Map<String, dynamic> _dados = {};
   Timer? _debounceNome;
 
-  // ✅ Getter público pro BotaoSalvar
   Map<String, dynamic> get dados => _dados;
 
   Map<String, dynamic> get(int l, int g) =>
@@ -436,6 +438,7 @@ class EventosStore extends ChangeNotifier {
     await Cloud.salvar('eventos', {'dados': _dados});
   }
 }
+
 // ============== MAPAS STORE ==============
 class MapasStore {
   static final Map<String, String> _fotos = {};
@@ -459,9 +462,7 @@ class MapasStore {
   }
 }
 
-
-
-// ============== BOTÃO SALVAR CORRIGIDO E SEGURO ==============
+// ============== BOTÃO SALVAR ==============
 class BotaoSalvar extends StatefulWidget {
   const BotaoSalvar({super.key});
 
@@ -479,34 +480,28 @@ class _BotaoSalvarState extends State<BotaoSalvar> {
     try {
       final auth = AuthStore.instance;
 
-      // 1. Territórios (sempre)
       await Cloud.salvar('territorios', {
         'lista': TerritoriosStore.instance.lista.map((t) => t.toJson()).toList(),
       });
 
-      // 2. Admins (só se for admin)
       if (auth.podeEditarImportante) {
         await Cloud.salvar('admins', {'senhas': auth.admins});
       }
 
-      // 3. Dirigentes (converte array → map)
       final nomesMap = <String, dynamic>{};
       for (int i = 0; i < DirigentesStore.nomes.length; i++) {
         nomesMap['$i'] = DirigentesStore.nomes[i];
       }
       await Cloud.salvar('dirigentes', {'nomes': nomesMap});
 
-      // 4. Serviço de Campo
       await Cloud.salvar('servico_campo', {
         'locais': ServicoCampoStore.instance.locais,
       });
 
-      // 5. Eventos
       await Cloud.salvar('eventos', {
         'dados': EventosStore.instance.dados,
       });
 
-      // Atualiza o aviso de horário na tela
       AppState.instance.save();
 
       if (!mounted) return;
@@ -552,6 +547,7 @@ class _BotaoSalvarState extends State<BotaoSalvar> {
           );
   }
 }
+
 // ============== BADGE USUÁRIO ==============
 class BadgeUsuario extends StatelessWidget {
   const BadgeUsuario({super.key});
@@ -582,6 +578,7 @@ class BadgeUsuario extends StatelessWidget {
     );
   }
 }
+
 // ============== HOME ==============
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -770,7 +767,6 @@ class _HomePageState extends State<HomePage> {
           height: 150,
           decoration: BoxDecoration(color: C.bege, borderRadius: BorderRadius.circular(12)),
           child: Stack(children: [
-            // ✅ withOpacity → withValues
             Center(child: Icon(Icons.map_outlined, size: 60, color: C.cinza.withValues(alpha: 0.6))),
             const Positioned(top: 25, left: 40,
                 child: Icon(Icons.location_on, color: C.azul, size: 28)),
@@ -832,7 +828,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-
 // ============== TERRITÓRIOS ==============
 class TerritoriosPage extends StatefulWidget {
   const TerritoriosPage({super.key});
@@ -976,6 +971,7 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
     DesignacaoStore.instance.addListener(_onDesig);
     ObsStore.instance.addListener(_onDesig);
     _ctrlObs.text = ObsStore.instance.get(widget.numero);
+    _fotoMapa = MapasStore.get(widget.numero);
   }
   @override
   void dispose() {
@@ -1039,11 +1035,6 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
     _ctrlNome.clear();
     _ctrlDataInicial.clear();
     _ctrlDataConclusao.clear();
-    // 👇 COLOQUE ESTA LINHA LOGO ABAIXO DA LINHA 997:
-Cloud.salvar('designacoes', {
-  'dados': DesignacaoStore.instance.get(widget.numero, 0).toJson(),
-});
-
   }
   void _concluirDesignacao() {
     final data = _ctrlDataConclusao.text.trim();
@@ -1176,98 +1167,77 @@ Cloud.salvar('designacoes', {
       default: return Colors.white;
     }
   }
-  
+
   Future<void> _abrirOpcoesFoto() async {
-  if (!AuthStore.instance.podeEditarImportante) {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('Apenas administradores podem alterar a foto do mapa.'),
-      backgroundColor: C.vermelho,
-      duration: Duration(seconds: 2),
-    ));
-    return;
-  }
-  showModalBottomSheet(
-    context: context,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (ctx) => SafeArea(child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Container(width: 40, height: 4,
-            decoration: BoxDecoration(color: C.cinza, borderRadius: BorderRadius.circular(2))),
-        const SizedBox(height: 16),
-        const Text('Foto do mapa',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: C.azul)),
-        const SizedBox(height: 20),
-        _opcaoFoto(Icons.photo_library_outlined, 'Escolher da galeria', () async {
-          Navigator.pop(ctx);
-          await _escolherImagem(ImageSource.gallery);
-        }),
-        const SizedBox(height: 8),
-        _opcaoFoto(Icons.camera_alt_outlined, 'Tirar foto', () async {
-          Navigator.pop(ctx);
-          await _escolherImagem(ImageSource.camera);
-        }),
-        if (_fotoMapa != null && _fotoMapa!.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          _opcaoFoto(Icons.delete_outline, 'Remover foto', () {
-            Navigator.pop(ctx);
-            setState(() => _fotoMapa = null);
-            MapasStore.set(widget.numero, null);
-          }, cor: Colors.red),
-        ],
-      ]),
-    )),
-  );
-}
-
-Future<void> _escolherImagem(ImageSource source) async {
-  try {
-    final picker = ImagePicker();
-    final XFile? file = await picker.pickImage(
-      source: source,
-      maxWidth: 800,
-      maxHeight: 800,
-      imageQuality: 40,
-    );
-    if (file == null) return;
-    final bytes = await file.readAsBytes();
-    final base64Str = base64Encode(bytes);
-    if (!mounted) return;
-    setState(() => _fotoMapa = base64Str);
-    MapasStore.set(widget.numero, base64Str);
-  } catch (e) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Erro ao escolher imagem: $e'),
-      backgroundColor: C.vermelho,
-    ));
-  }
-
-  // ============== MAPAS STORE ==============
-class MapasStore {
-  static final Map<String, String> _fotos = {};
-
-  static String? get(String territorio) => _fotos[territorio];
-
-  static void set(String territorio, String? base64) {
-    if (base64 == null || base64.isEmpty) {
-      _fotos.remove(territorio);
-    } else {
-      _fotos[territorio] = base64;
+    if (!AuthStore.instance.podeEditarImportante) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Apenas administradores podem alterar a foto do mapa.'),
+        backgroundColor: C.vermelho,
+        duration: Duration(seconds: 2),
+      ));
+      return;
     }
-    Cloud.salvar('mapas', {territorio: base64 ?? ''});
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(width: 40, height: 4,
+              decoration: BoxDecoration(color: C.cinza, borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 16),
+          const Text('Foto do mapa',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: C.azul)),
+          const SizedBox(height: 20),
+          _opcaoFoto(Icons.photo_library_outlined, 'Escolher da galeria', () async {
+            Navigator.pop(ctx);
+            await _escolherImagem(ImageSource.gallery);
+          }),
+          const SizedBox(height: 8),
+          _opcaoFoto(Icons.camera_alt_outlined, 'Tirar foto', () async {
+            Navigator.pop(ctx);
+            await _escolherImagem(ImageSource.camera);
+          }),
+          if (_fotoMapa != null && _fotoMapa!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _opcaoFoto(Icons.delete_outline, 'Remover foto', () {
+              Navigator.pop(ctx);
+              setState(() => _fotoMapa = null);
+              MapasStore.set(widget.numero, null);
+            }, cor: Colors.red),
+          ],
+        ]),
+      )),
+    );
   }
 
-  static void carregar(Map<String, dynamic> dados) {
-    _fotos.clear();
-    dados.forEach((k, v) {
-      if (v is String && v.isNotEmpty) _fotos[k] = v;
-    });
+  Future<void> _escolherImagem(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final XFile? file = await picker.pickImage(
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 40,
+      );
+      if (file == null) return;
+      final bytes = await file.readAsBytes();
+      final base64Str = base64Encode(bytes);
+      if (!mounted) return;
+      setState(() => _fotoMapa = base64Str);
+      MapasStore.set(widget.numero, base64Str);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Erro ao escolher imagem: $e'),
+        backgroundColor: C.vermelho,
+      ));
+    }
   }
-}
-widget_opcaoFoto(IconData icon, String label, VoidCallback onTap, {Color? cor}) {
+
+  Widget _opcaoFoto(IconData icon, String label, VoidCallback onTap, {Color? cor}) {
     return Material(
       color: C.bege,
       borderRadius: BorderRadius.circular(12),
@@ -1352,10 +1322,15 @@ widget_opcaoFoto(IconData icon, String label, VoidCallback onTap, {Color? cor}) 
       height: 240,
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
       clipBehavior: Clip.antiAlias,
-      child: _fotoMapa != null
-          ? Image.network(_fotoMapa!, fit: BoxFit.cover)
+      child: (_fotoMapa != null && _fotoMapa!.isNotEmpty)
+          ? Image.memory(
+              base64Decode(_fotoMapa!),
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const Center(
+                child: Icon(Icons.broken_image, size: 60, color: Colors.grey),
+              ),
+            )
           : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              // ✅ withOpacity → withValues
               Icon(Icons.image_outlined, size: 60, color: C.cinza.withValues(alpha: 0.6)),
               const SizedBox(height: 10),
               const Text('Nenhuma foto do mapa',
@@ -1553,10 +1528,10 @@ widget_opcaoFoto(IconData icon, String label, VoidCallback onTap, {Color? cor}) 
                 );
               }
               final estado = _quadrasEstados[linha - 1][coluna];
-return GestureDetector(
-  onTap: () => _alternarCelula(linha - 1, coluna),
-  child: AnimatedContainer(
-    duration: const Duration(milliseconds: 150),
+              return GestureDetector(
+                onTap: () => _alternarCelula(linha - 1, coluna),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
                   width: w,
                   height: h,
                   decoration: BoxDecoration(
@@ -1583,6 +1558,7 @@ return GestureDetector(
     );
   }
 }
+
 // ============== SERVIÇO DE CAMPO ==============
 class ServicoCampoPage extends StatefulWidget {
   const ServicoCampoPage({super.key});
@@ -1677,7 +1653,6 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
           idxGrupoDomingo++;
         }
       }
-      // ✅ Chave única por dia
       final dataKey = '$ano-${mes.toString().padLeft(2, '0')}-${dia.toString().padLeft(2, '0')}';
       linhas.add(_LinhaServico(
         dataKey: dataKey,
@@ -1903,7 +1878,6 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
     );
   }
 
-  // ✅ AGORA usa ServicoCampoStore
   Widget _celLocal(_LinhaServico l, double largura, Color? corTexto) {
     if (l.semana == 'Dom') {
       return Container(
@@ -1978,10 +1952,10 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
           overflow: TextOverflow.ellipsis,
           style: TextStyle(fontSize: 10, color: cor,
               fontWeight: vazio ? FontWeight.normal : FontWeight.w600)),
+           
     );
   }
 }
-
 // ============== DIRIGENTE ==============
 class DirigentePage extends StatefulWidget {
   const DirigentePage({super.key});
@@ -1999,47 +1973,46 @@ class _DirigentePageState extends State<DirigentePage> {
   final List<String> _cabecalho = ['SEGUNDA A SEXTA', 'SÁBADO', 'DOMINGO'];
 
   @override
-void initState() {
-  super.initState();
-  AuthStore.instance.addListener(_onAuth);
-  // ✅ Preenche com o que tem em memória
-  _preencherControllers();
-  // ✅ E busca dados fresquinhos do Firestore
-  _recarregarDoFirestore();
-}
-
-// Preenche os controllers a partir da store local
-void _preencherControllers() {
-  for (int coluna = 0; coluna < totalColunas; coluna++) {
-    // Limpa antes pra não duplicar
-    for (int i = 1; i < totalLinhas; i++) {
-      _controllers[i][coluna].text = '';
-    }
-    final lista = DirigentesStore.nomes[coluna];
-    for (int i = 0; i < lista.length && i < (totalLinhas - 1); i++) {
-      _controllers[i + 1][coluna].text = lista[i];
-    }
+  void initState() {
+    super.initState();
+    AuthStore.instance.addListener(_onAuth);
+    _preencherControllers();
+    _recarregarDoFirestore();
   }
-}
 
-// ✅ NOVO: busca dados fresquinhos do Firestore ao abrir a tela
-Future<void> _recarregarDoFirestore() async {
-  if (!Cloud.disponivel) return;
-  try {
-    final dir = await Cloud.ler('dirigentes');
-    if (dir != null && dir['nomes'] != null) {
-      DirigentesStore.carregar(List<List<String>>.from(
-        (dir['nomes'] as List).map((e) => List<String>.from(e)),
-      ));
-      if (mounted) {
-        _preencherControllers();
-        setState(() {});
+  void _preencherControllers() {
+    for (int coluna = 0; coluna < totalColunas; coluna++) {
+      for (int i = 1; i < totalLinhas; i++) {
+        _controllers[i][coluna].text = '';
+      }
+      final lista = DirigentesStore.nomes[coluna];
+      for (int i = 0; i < lista.length && i < (totalLinhas - 1); i++) {
+        _controllers[i + 1][coluna].text = lista[i];
       }
     }
-  } catch (e) {
-    debugPrint('Erro ao recarregar dirigentes: $e');
   }
-}
+
+  Future<void> _recarregarDoFirestore() async {
+    if (!Cloud.disponivel) return;
+    try {
+      final dir = await Cloud.ler('dirigentes');
+      if (dir != null && dir['nomes'] != null) {
+        // ✅ Converte o MAPA do Firestore → array de arrays
+        final nomesMap = Map<String, dynamic>.from(dir['nomes'] as Map);
+        final lista = List<List<String>>.generate(
+          3,
+          (i) => List<String>.from(nomesMap['$i'] ?? []),
+        );
+        DirigentesStore.carregar(lista);
+        if (mounted) {
+          _preencherControllers();
+          setState(() {});
+        }
+      }
+    } catch (e) {
+      debugPrint('Erro ao recarregar dirigentes: $e');
+    }
+  }
 
   @override
   void dispose() {
@@ -2584,46 +2557,42 @@ class _EventosPageState extends State<EventosPage> {
   String _query = '';
 
   @override
-void initState() {
-  super.initState();
-  AuthStore.instance.addListener(_onAuth);
-  EventosStore.instance.addListener(_onChanged);
-  _nomes = List.generate(
-    totalLinhas,
-    (_) => List.generate(totalGrupos, (_) => TextEditingController()),
-  );
-  _searchController.addListener(_onSearch);
-  // ✅ Preenche com o que tem em memória
-  _preencherControllers();
-  // ✅ E busca dados fresquinhos do Firestore
-  _recarregarDoFirestore();
-}
-
-// Preenche os controllers a partir da store local
-void _preencherControllers() {
-  for (int l = 0; l < totalLinhas; l++) {
-    for (int g = 0; g < totalGrupos; g++) {
-      _nomes[l][g].text = EventosStore.instance.get(l, g)['nome'] as String? ?? '';
-    }
+  void initState() {
+    super.initState();
+    AuthStore.instance.addListener(_onAuth);
+    EventosStore.instance.addListener(_onChanged);
+    _nomes = List.generate(
+      totalLinhas,
+      (_) => List.generate(totalGrupos, (_) => TextEditingController()),
+    );
+    _searchController.addListener(_onSearch);
+    _preencherControllers();
+    _recarregarDoFirestore();
   }
-}
 
-// ✅ NOVO: busca dados fresquinhos do Firestore ao abrir a tela
-Future<void> _recarregarDoFirestore() async {
-  if (!Cloud.disponivel) return;
-  try {
-    final ev = await Cloud.ler('eventos');
-    if (ev != null && ev['dados'] != null) {
-      EventosStore.instance.carregar(Map<String, dynamic>.from(ev['dados']));
-      if (mounted) {
-        _preencherControllers();
-        setState(() {});
+  void _preencherControllers() {
+    for (int l = 0; l < totalLinhas; l++) {
+      for (int g = 0; g < totalGrupos; g++) {
+        _nomes[l][g].text = EventosStore.instance.get(l, g)['nome'] as String? ?? '';
       }
     }
-  } catch (e) {
-    debugPrint('Erro ao recarregar eventos: $e');
   }
-}
+
+  Future<void> _recarregarDoFirestore() async {
+    if (!Cloud.disponivel) return;
+    try {
+      final ev = await Cloud.ler('eventos');
+      if (ev != null && ev['dados'] != null) {
+        EventosStore.instance.carregar(Map<String, dynamic>.from(ev['dados']));
+        if (mounted) {
+          _preencherControllers();
+          setState(() {});
+        }
+      }
+    } catch (e) {
+      debugPrint('Erro ao recarregar eventos: $e');
+    }
+  }
 
   @override
   void dispose() {
@@ -2643,7 +2612,6 @@ Future<void> _recarregarDoFirestore() async {
     if (mounted) setState(() {});
   }
 
-  // ✅ Sincroniza controllers com a store (para carregar dados da nuvem)
   void _onChanged() {
     if (mounted) {
       for (int l = 0; l < totalLinhas; l++) {
@@ -2682,7 +2650,6 @@ Future<void> _recarregarDoFirestore() async {
     return ((g * totalLinhas) + l + 1).toString().padLeft(2, '0');
   }
 
-  // ✅ Salva na store
   void _toggleDia(int l, int g, int bit) {
     if (!AuthStore.instance.podeEditarImportante) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -2695,7 +2662,6 @@ Future<void> _recarregarDoFirestore() async {
     EventosStore.instance.toggleDia(l, g, bit);
   }
 
-  // ✅ Salva na store
   void _togglePg(int l, int g) {
     if (!AuthStore.instance.podeEditarImportante) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -2890,7 +2856,6 @@ Future<void> _recarregarDoFirestore() async {
     );
   }
 
-  // ✅ Salva nome na store
   Widget _celNome(int l, int g, bool pode) {
     final dest = _match(l, g);
     return Container(
@@ -2944,7 +2909,6 @@ Future<void> _recarregarDoFirestore() async {
     );
   }
 
-  // ✅ Lê dias da store
   Widget _botaoDia(int l, int g, int bit, String label) {
     final dias = EventosStore.instance.get(l, g)['dias'] as int? ?? 0;
     final ativo = (dias & bit) != 0;
@@ -2967,7 +2931,6 @@ Future<void> _recarregarDoFirestore() async {
     );
   }
 
-  // ✅ Lê PG da store
   Widget _celPg(int l, int g) {
     final pago = EventosStore.instance.get(l, g)['pg'] as bool? ?? false;
     return Container(
@@ -3384,7 +3347,7 @@ class _ItemPermissao extends StatelessWidget {
 
 // ============== MODELO AUXILIAR ==============
 class _LinhaServico {
-  final String dataKey;   // ✅ NOVO
+  final String dataKey;
   final String mes;
   final String semana;
   final String horario;
