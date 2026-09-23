@@ -462,6 +462,41 @@ class MapasStore {
   }
 }
 
+// ============== QUADRAS STORE ==============
+class QuadrasStore {
+  // estrutura: { "T-1": [[0,0,...], [0,0,...]], ... }
+  static final Map<String, List<List<int>>> _dados = {};
+
+  static List<List<int>> get(String territorio) =>
+      _dados[territorio] ??
+      List.generate(10, (_) => List.generate(14, (_) => 0));
+
+  static void set(String territorio, List<List<int>> estados) {
+    _dados[territorio] = estados;
+    _salvar(territorio);
+  }
+
+  static void carregar(Map<String, dynamic> dados) {
+    _dados.clear();
+    dados.forEach((terr, list) {
+      if (list is List) {
+        final matriz = list.map((linha) {
+          if (linha is List) {
+            return linha.map((v) => int.tryParse(v.toString()) ?? 0).toList();
+          }
+          return <int>[];
+        }).toList();
+        _dados[terr] = matriz;
+      }
+    });
+  }
+
+  static Future<void> _salvar(String territorio) async {
+    await Cloud.salvar('quadras', {
+      territorio: _dados[territorio],
+    });
+  }
+}
 // ============== BOTÃO SALVAR ==============
 class BotaoSalvar extends StatefulWidget {
   const BotaoSalvar({super.key});
