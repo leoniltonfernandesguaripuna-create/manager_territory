@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
 import 'cloud.dart';
 
 Future<void> main() async {
@@ -1243,7 +1245,7 @@ Future<void> _escolherImagem(ImageSource source) async {
     ));
   }
 }
-  widget_opcaoFoto(IconData icon, String label, VoidCallback onTap, {Color? cor}) {
+widget_opcaoFoto(IconData icon, String label, VoidCallback onTap, {Color? cor}) {
     return Material(
       color: C.bege,
       borderRadius: BorderRadius.circular(12),
