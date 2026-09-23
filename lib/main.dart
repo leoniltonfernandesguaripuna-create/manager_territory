@@ -1174,50 +1174,76 @@ Cloud.salvar('designacoes', {
       default: return Colors.white;
     }
   }
-  void _abrirOpcoesFoto() {
-    if (!AuthStore.instance.podeEditarImportante) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Apenas administradores podem alterar a foto do mapa.'),
-        backgroundColor: C.vermelho,
-        duration: Duration(seconds: 2),
-      ));
-      return;
-    }
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(width: 40, height: 4,
-              decoration: BoxDecoration(color: C.cinza, borderRadius: BorderRadius.circular(2))),
-          const SizedBox(height: 16),
-          const Text('Foto do mapa',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: C.azul)),
-          const SizedBox(height: 20),
-          _opcaoFoto(Icons.photo_library_outlined, 'Escolher da galeria', () {
-            Navigator.pop(ctx);
-            setState(() => _fotoMapa = 'https://picsum.photos/seed/${widget.numero}/600/500');
-          }),
-          const SizedBox(height: 8),
-          _opcaoFoto(Icons.camera_alt_outlined, 'Tirar foto', () {
-            Navigator.pop(ctx);
-            setState(() => _fotoMapa = 'https://picsum.photos/seed/${widget.numero}/600/500');
-          }),
-          if (_fotoMapa != null) ...[
-            const SizedBox(height: 8),
-            _opcaoFoto(Icons.delete_outline, 'Remover foto', () {
-              Navigator.pop(ctx);
-              setState(() => _fotoMapa = null);
-            }, cor: Colors.red),
-          ],
-        ]),
-      )),
-    );
+  
+  Future<void> _abrirOpcoesFoto() async {
+  if (!AuthStore.instance.podeEditarImportante) {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Apenas administradores podem alterar a foto do mapa.'),
+      backgroundColor: C.vermelho,
+      duration: Duration(seconds: 2),
+    ));
+    return;
   }
-  Widget _opcaoFoto(IconData icon, String label, VoidCallback onTap, {Color? cor}) {
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (ctx) => SafeArea(child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 40, height: 4,
+            decoration: BoxDecoration(color: C.cinza, borderRadius: BorderRadius.circular(2))),
+        const SizedBox(height: 16),
+        const Text('Foto do mapa',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: C.azul)),
+        const SizedBox(height: 20),
+        _opcaoFoto(Icons.photo_library_outlined, 'Escolher da galeria', () async {
+          Navigator.pop(ctx);
+          await _escolherImagem(ImageSource.gallery);
+        }),
+        const SizedBox(height: 8),
+        _opcaoFoto(Icons.camera_alt_outlined, 'Tirar foto', () async {
+          Navigator.pop(ctx);
+          await _escolherImagem(ImageSource.camera);
+        }),
+        if (_fotoMapa != null && _fotoMapa!.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _opcaoFoto(Icons.delete_outline, 'Remover foto', () {
+            Navigator.pop(ctx);
+            setState(() => _fotoMapa = null);
+            MapasStore.set(widget.numero, null);
+          }, cor: Colors.red),
+        ],
+      ]),
+    )),
+  );
+}
+
+Future<void> _escolherImagem(ImageSource source) async {
+  try {
+    final picker = ImagePicker();
+    final XFile? file = await picker.pickImage(
+      source: source,
+      maxWidth: 800,
+      maxHeight: 800,
+      imageQuality: 40,
+    );
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    final base64Str = base64Encode(bytes);
+    if (!mounted) return;
+    setState(() => _fotoMapa = base64Str);
+    MapasStore.set(widget.numero, base64Str);
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Erro ao escolher imagem: $e'),
+      backgroundColor: C.vermelho,
+    ));
+  }
+}
+  widget_opcaoFoto(IconData icon, String label, VoidCallback onTap, {Color? cor}) {
     return Material(
       color: C.bege,
       borderRadius: BorderRadius.circular(12),
