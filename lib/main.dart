@@ -53,6 +53,10 @@ Future<void> _carregarDados() async {
     if (mapas != null) {
       MapasStore.carregar(mapas);
     }
+    final quadras = await Cloud.ler('quadras');
+    if (quadras != null) {
+      QuadrasStore.carregar(quadras);
+    }
   } catch (_) {}
 }
 
@@ -464,7 +468,6 @@ class MapasStore {
 
 // ============== QUADRAS STORE ==============
 class QuadrasStore {
-  // estrutura: { "T-1": [[0,0,...], [0,0,...]], ... }
   static final Map<String, List<List<int>>> _dados = {};
 
   static List<List<int>> get(String territorio) =>
@@ -497,6 +500,7 @@ class QuadrasStore {
     });
   }
 }
+
 // ============== BOTÃO SALVAR ==============
 class BotaoSalvar extends StatefulWidget {
   const BotaoSalvar({super.key});
@@ -984,7 +988,7 @@ class DetalheTerritorioPage extends StatefulWidget {
 
 class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
   String? _fotoMapa;
-  final List<List<int>> _quadrasEstados = List.generate(10, (_) => List.generate(14, (_) => 0));
+  late List<List<int>> _quadrasEstados;
   final List<String> _cabecalhoDirigente = [
     'DIRIGENTE', 'PUBLI', 'DATA',
     'DIRIGENTE', 'PUBLI', 'DATA',
@@ -1007,6 +1011,7 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
     ObsStore.instance.addListener(_onDesig);
     _ctrlObs.text = ObsStore.instance.get(widget.numero);
     _fotoMapa = MapasStore.get(widget.numero);
+    _quadrasEstados = QuadrasStore.get(widget.numero);
   }
   @override
   void dispose() {
@@ -1193,7 +1198,18 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
   }
 
   void _alternarCelula(int linha, int coluna) {
-    setState(() => _quadrasEstados[linha][coluna] = (_quadrasEstados[linha][coluna] + 1) % 3);
+    if (!AuthStore.instance.podeEditarImportante) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Apenas administradores podem editar esta tela.'),
+        backgroundColor: C.vermelho,
+        duration: Duration(seconds: 1),
+      ));
+      return;
+    }
+    setState(() {
+      _quadrasEstados[linha][coluna] = (_quadrasEstados[linha][coluna] + 1) % 3;
+      QuadrasStore.set(widget.numero, _quadrasEstados);
+    });
   }
   Color _corCelula(int estado) {
     switch (estado) {
@@ -1987,7 +2003,6 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
           overflow: TextOverflow.ellipsis,
           style: TextStyle(fontSize: 10, color: cor,
               fontWeight: vazio ? FontWeight.normal : FontWeight.w600)),
-           
     );
   }
 }
@@ -2032,7 +2047,6 @@ class _DirigentePageState extends State<DirigentePage> {
     try {
       final dir = await Cloud.ler('dirigentes');
       if (dir != null && dir['nomes'] != null) {
-        // ✅ Converte o MAPA do Firestore → array de arrays
         final nomesMap = Map<String, dynamic>.from(dir['nomes'] as Map);
         final lista = List<List<String>>.generate(
           3,
