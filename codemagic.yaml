@@ -10,7 +10,6 @@ workflows:
         - push
       branch_patterns:
         - pattern: main
-          filter_to_source: true
     scripts:
       - name: Get Flutter packages
         script: flutter packages pub get
