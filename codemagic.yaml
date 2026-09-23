@@ -11,9 +11,7 @@ workflows: {
     },
     "triggering": {
       "events": ["push"],
-      "branch_patterns": [
-        {"pattern": "main", "filter_to_source": true}
-      ]
+      "branch_patterns": 
     },
     "scripts": [
       {
