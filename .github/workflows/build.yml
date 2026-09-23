@@ -10,43 +10,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout do repositório
+      - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Configurar Java
+      - name: Configurar Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
 
       - name: Configurar Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          cache: true
 
-      - name: Instalar dependências
+      - name: Baixar dependências
         run: flutter pub get
 
-      - name: Criar projeto Flutter em pasta separada
-        run: |
-          cd /tmp
-          flutter create --project-name territory_manager --platforms android fresh_app
-
-      - name: Remover android antigo e copiar o novo
-        run: |
-          rm -rf android
-          cp -r /tmp/fresh_app/android ./android
-
-      - name: Gerar ícones do app
-        run: dart run flutter_launcher_icons
-
-      - name: Criar google-services.json
-        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > android/app/google-services.json
-
-      - name: Compilar APK
+      - name: Buildar APK release
         run: flutter build apk --release
 
-      - name: Salvar o APK como artefato
+      - name: Salvar APK como artefato
         uses: actions/upload-artifact@v4
         with:
           name: app-release
