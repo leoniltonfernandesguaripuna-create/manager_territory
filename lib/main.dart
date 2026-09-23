@@ -1553,9 +1553,10 @@ widget_opcaoFoto(IconData icon, String label, VoidCallback onTap, {Color? cor}) 
                 );
               }
               final estado = _quadrasEstados[linha - 1][coluna];
-              onTap: () => _alternarCelula(linha - 1, coluna),
-
-                  duration: const Duration(milliseconds: 150),
+return GestureDetector(
+  onTap: () => _alternarCelula(linha - 1, coluna),
+  child: AnimatedContainer(
+    duration: const Duration(milliseconds: 150),
                   width: w,
                   height: h,
                   decoration: BoxDecoration(
