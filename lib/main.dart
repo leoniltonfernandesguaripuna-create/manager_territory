@@ -1553,15 +1553,7 @@ widget_opcaoFoto(IconData icon, String label, VoidCallback onTap, {Color? cor}) 
                 );
               }
               final estado = _quadrasEstados[linha - 1][coluna];
-              return GestureDetector(
-                            onTap: () async {
-        _alternarCelula(linha - 1, coluna - 1); // Garanta que os nomes das variáveis batam com seu código
-        await Cloud.salvar('quadras_trabalhadas', {
-          widget.numero: _quadrasEstados, // 💡 Salva os dados usando o número do território como chave
-        });
-      },
-
-      child: AnimatedContainer(
+              onTap: () => _alternarCelula(linha - 1, coluna),
 
                   duration: const Duration(milliseconds: 150),
                   width: w,
