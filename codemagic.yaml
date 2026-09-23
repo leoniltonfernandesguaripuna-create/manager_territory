@@ -8,10 +8,9 @@ workflows:
     triggering:
       events:
         - push
-            branch_patterns:
+      branch_patterns:
         - pattern: main
           filter_to_source: true
-
     scripts:
       - name: Get Flutter packages
         script: flutter packages pub get
@@ -19,9 +18,3 @@ workflows:
         script: flutter build apk --release
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
-    publishing:
-      email:
-        recipients:
-          - seu-email@dominio.com
-
-  
