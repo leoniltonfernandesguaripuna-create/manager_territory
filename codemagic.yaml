@@ -1,26 +1,13 @@
 workflows:
-  android-firebase-workflow:
-    name: Build Manager Territory (Android)
+  android-release:
+    name: Android Release
     max_build_duration: 60
-    instance_type: mac_mini_m1
     environment:
-      groups:
-        - firebase_credentials
+      flutter: stable
     scripts:
-      - name: Configurar local.properties
-        script: |
-          echo "flutter.sdk=$HOME/programs/flutter" > android/local.properties
-      
-      - name: Criar google-services json real
-        script: |
-          echo "$ANDROID_FIREBASE_SECRET" > android/app/google-services.json
-      
-      - name: Baixar pacotes Flutter
-        script: |
-          flutter packages pub get
-      
-      - name: Compilar APK em Release
-        script: |
-          flutter build apk --release --build-name=1.0.0 --build-number=1
+      - name: Flutter pub get
+        script: flutter pub get
+      - name: Build APK release
+        script: flutter build apk --release
     artifacts:
-      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/flutter-apk/app-release.apk
