@@ -1,35 +1,13 @@
-# O arquivo deve ser salvo como codemagic.yaml na raiz do projeto
-workflows: {
-  "flutter-build": {
-    "name": "Flutter Android Build",
-    "max_build_duration": 60,
-    "instance_type": "mac_mini_m1",
-    "environment": {
-      "groups": [],
-      "vars": {},
-      "flutter": "stable"
-    },
-    "triggering": {
-      "events": ["push"],
-      
-    },
-    "scripts": [
-      {
-        "name": "Get Flutter packages",
-        "script": "flutter packages pub get"
-      },
-      {
-        "name": "Flutter build APK",
-        "script": "flutter build apk --release"
-      }
-    ],
-    "artifacts": [
-      "build/app/outputs/flutter-apk/*.apk"
-    ],
-    "publishing": {
-      "email": {
-        "recipients": ["seu-email@dominio.com"]
-      }
-    }
-  }
-}
+workflows:
+  android-release:
+    name: Android Release
+    max_build_duration: 60
+    environment:
+      flutter: stable
+    scripts:
+      - name: Flutter pub get
+        script: flutter pub get
+      - name: Build APK release
+        script: flutter build apk --release
+    artifacts:
+      - build/app/outputs/flutter-apk/app-release.apk
