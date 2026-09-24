@@ -501,6 +501,40 @@ class QuadrasStore {
   }
 }
 
+// ============== DIRIGENTE TERRITÓRIO STORE ==============
+class DirigenteTerritorioStore {
+  static final Map<String, Map<String, String>> _dados = {};
+
+  static String valor(String territorio, int linha, int coluna) {
+    final map = _dados[territorio];
+    if (map == null) return '';
+    return map['${linha}_$coluna'] ?? '';
+  }
+
+  static void set(String territorio, int linha, int coluna, String valor) {
+    _dados.putIfAbsent(territorio, () => {});
+    _dados[territorio]!['${linha}_$coluna'] = valor;
+    _salvar(territorio);
+  }
+
+  static void carregar(Map<String, dynamic> dados) {
+    _dados.clear();
+    dados.forEach((terr, map) {
+      if (map is Map) {
+        final m = <String, String>{};
+        map.forEach((k, v) => m[k] = v.toString());
+        _dados[terr] = m;
+      }
+    });
+  }
+
+  static Future<void> _salvar(String territorio) async {
+    await Cloud.salvar('dirigentes_territorio', {
+      territorio: _dados[territorio],
+    });
+  }
+}
+
 // ============== BOTÃO SALVAR ==============
 class BotaoSalvar extends StatefulWidget {
   const BotaoSalvar({super.key});
