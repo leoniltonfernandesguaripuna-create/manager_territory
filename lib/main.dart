@@ -1843,11 +1843,15 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
   
     @override
 Widget build(BuildContext context) {
-  final pode = AuthStore.instance.podeEditarImportante; nomeMes = _nomesMeses[_mes - 1];
-  final nomeMes = _nomesMeses[_mes - 1];
+  final pode = AuthStore.instance.podeEditarImportante;
+final nomeMes = _nomesMeses[_mes - 1];
     return Scaffold(
       backgroundColor: C.cinzaClaro,
       appBar: AppBar(
+        backgroundColor: C.azul,
+       foregroundColor: Colors.white,
+       elevation: 0,
+        title: const Text('SERVIÇO DE CAMPO',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 0.5)),
         centerTitle: true,
         actions: const [BadgeUsuario(), BotaoSalvar()],
