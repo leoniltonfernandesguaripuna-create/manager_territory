@@ -57,6 +57,10 @@ Future<void> _carregarDados() async {
     if (quadras != null) {
       QuadrasStore.carregar(quadras);
     }
+    final dirTerr = await Cloud.ler('dirigentes_territorio');
+    if (dirTerr != null) {
+      DirigenteTerritorioStore.carregar(dirTerr);
+    }
   } catch (_) {}
 }
 
@@ -1046,6 +1050,13 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
     _ctrlObs.text = ObsStore.instance.get(widget.numero);
     _fotoMapa = MapasStore.get(widget.numero);
     _quadrasEstados = QuadrasStore.get(widget.numero);
+    // ✅ Carrega a grade 11x11 de dirigente
+    for (int l = 0; l < 11; l++) {
+      for (int c = 0; c < 11; c++) {
+        _dirigenteControllers[l][c].text =
+            DirigenteTerritorioStore.valor(widget.numero, l, c);
+      }
+    }
   }
   @override
   void dispose() {
@@ -1528,6 +1539,7 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
   Widget _gradeDirigente() {
     const double w = 100;
     const double h = 44;
+    final pode = AuthStore.instance.podeEditarImportante;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1568,7 +1580,15 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
                 child: TextField(
                   controller: _dirigenteControllers[linha][coluna],
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 12, color: C.azul),
+                  readOnly: !pode,
+                  onChanged: pode
+                      ? (v) => DirigenteTerritorioStore.set(
+                          widget.numero, linha, coluna, v)
+                      : null,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: pode ? C.azul : C.cinza,
+                  ),
                   decoration: const InputDecoration(
                     border: InputBorder.none,
                     isDense: true,
@@ -2040,6 +2060,7 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
     );
   }
 }
+
 // ============== DIRIGENTE ==============
 class DirigentePage extends StatefulWidget {
   const DirigentePage({super.key});
