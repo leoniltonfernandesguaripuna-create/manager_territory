@@ -1840,55 +1840,14 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
     if (l.semana == 'Dom') return Colors.white;
     return C.azul;
   }
-
-  @override
-  Widget build(BuildContext context) {
-    final pode = AuthStore.instance.podeEditarImportante;
-
-    // 🔒 Bloqueia acesso para não-admins
-    if (!pode) {
-      return Scaffold(
-        backgroundColor: C.cinzaClaro,
-        appBar: AppBar(
-          backgroundColor: C.azul,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          title: const Text('SERVIÇO DE CAMPO',
-              style: TextStyle(fontWeight: FontWeight.bold,
-                  fontSize: 16, letterSpacing: 0.5)),
-          centerTitle: true,
-          actions: const [BadgeUsuario(), BotaoSalvar()],
-        ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.lock_outline, size: 80, color: C.cinza),
-                SizedBox(height: 16),
-                Text('Acesso restrito',
-                    style: TextStyle(fontSize: 20,
-                        fontWeight: FontWeight.bold, color: C.azul)),
-                SizedBox(height: 8),
-                Text('Apenas administradores podem abrir esta aba.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14, color: C.cinza)),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    final nomeMes = _nomesMeses[_mes - 1];
+  
+    @override
+Widget build(BuildContext context) {
+  final pode = AuthStore.instance.podeEditarImportante; nomeMes = _nomesMeses[_mes - 1];
+  final nomeMes = _nomesMeses[_mes - 1];
     return Scaffold(
       backgroundColor: C.cinzaClaro,
       appBar: AppBar(
-        backgroundColor: C.azul,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Text('SERVIÇO DE CAMPO',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 0.5)),
         centerTitle: true,
         actions: const [BadgeUsuario(), BotaoSalvar()],
