@@ -829,6 +829,21 @@ class _HomePageState extends State<HomePage> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
+          // 🔒 Bloqueia Eventos, Serviço de Campo, S.13 e Dirigentes para não-admins
+          if (acao == 'eventos' ||
+              acao == 'servico' ||
+              acao == 's13' ||
+              acao == 'dirigente') {
+            if (!AuthStore.instance.podeEditarImportante) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Apenas administradores podem abrir esta aba.'),
+                backgroundColor: C.vermelho,
+                duration: Duration(seconds: 2),
+              ));
+              return;
+            }
+          }
+
           if (acao == 'territorios') {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const TerritoriosPage()));
           } else if (acao == 'servico') {
@@ -1820,8 +1835,45 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
 
   @override
   Widget build(BuildContext context) {
-    final nomeMes = _nomesMeses[_mes - 1];
     final pode = AuthStore.instance.podeEditarImportante;
+
+    // 🔒 Bloqueia acesso para não-admins
+    if (!pode) {
+      return Scaffold(
+        backgroundColor: C.cinzaClaro,
+        appBar: AppBar(
+          backgroundColor: C.azul,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          title: const Text('SERVIÇO DE CAMPO',
+              style: TextStyle(fontWeight: FontWeight.bold,
+                  fontSize: 16, letterSpacing: 0.5)),
+          centerTitle: true,
+          actions: const [BadgeUsuario(), BotaoSalvar()],
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.lock_outline, size: 80, color: C.cinza),
+                SizedBox(height: 16),
+                Text('Acesso restrito',
+                    style: TextStyle(fontSize: 20,
+                        fontWeight: FontWeight.bold, color: C.azul)),
+                SizedBox(height: 8),
+                Text('Apenas administradores podem abrir esta aba.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14, color: C.cinza)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final nomeMes = _nomesMeses[_mes - 1];
     return Scaffold(
       backgroundColor: C.cinzaClaro,
       appBar: AppBar(
@@ -2151,6 +2203,43 @@ class _DirigentePageState extends State<DirigentePage> {
   @override
   Widget build(BuildContext context) {
     final pode = AuthStore.instance.podeEditarImportante;
+
+    // 🔒 Bloqueia acesso para não-admins
+    if (!pode) {
+      return Scaffold(
+        backgroundColor: C.cinzaClaro,
+        appBar: AppBar(
+          backgroundColor: C.azul,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          title: const Text('DIRIGENTES',
+              style: TextStyle(fontWeight: FontWeight.bold,
+                  fontSize: 16, letterSpacing: 0.5)),
+          centerTitle: true,
+          actions: const [BadgeUsuario(), BotaoSalvar()],
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.lock_outline, size: 80, color: C.cinza),
+                SizedBox(height: 16),
+                Text('Acesso restrito',
+                    style: TextStyle(fontSize: 20,
+                        fontWeight: FontWeight.bold, color: C.azul)),
+                SizedBox(height: 8),
+                Text('Apenas administradores podem abrir esta aba.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14, color: C.cinza)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: C.cinzaClaro,
       appBar: AppBar(
@@ -2184,21 +2273,17 @@ class _DirigentePageState extends State<DirigentePage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: pode ? C.bege : const Color(0xFFFFE0E0),
+                color: C.bege,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(children: [
-                Icon(pode ? Icons.info_outline : Icons.lock,
-                    color: pode ? C.azul : C.vermelho, size: 16),
+                const Icon(Icons.info_outline, color: C.azul, size: 16),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    pode
-                        ? 'Seg-Sex → seg a sex | Sábado → sáb e dom | Domingo → só dom'
-                        : 'Somente admins editam esta tela.',
+                    'Seg-Sex → seg a sex | Sábado → sáb e dom | Domingo → só dom',
                     style: TextStyle(fontSize: 11,
-                        color: pode ? C.azul : C.vermelho,
-                        fontWeight: FontWeight.w600),
+                        color: C.azul, fontWeight: FontWeight.w600),
                   ),
                 ),
               ]),
@@ -2249,12 +2334,9 @@ class _DirigentePageState extends State<DirigentePage> {
                           child: TextField(
                             controller: _controllers[linha][coluna],
                             textAlign: TextAlign.center,
-                            readOnly: !pode,
-                            onChanged: pode
-                                ? (v) => _atualizarStore(linha, coluna, v)
-                                : null,
-                            style: TextStyle(fontSize: 12,
-                                color: pode ? C.azul : C.cinza,
+                            onChanged: (v) => _atualizarStore(linha, coluna, v),
+                            style: const TextStyle(fontSize: 12,
+                                color: C.azul,
                                 fontWeight: FontWeight.w500),
                             decoration: const InputDecoration(
                               border: InputBorder.none,
@@ -2408,6 +2490,43 @@ class _S13PageState extends State<S13Page> {
   @override
   Widget build(BuildContext context) {
     final pode = AuthStore.instance.podeEditarImportante;
+
+    // 🔒 Bloqueia acesso para não-admins
+    if (!pode) {
+      return Scaffold(
+        backgroundColor: C.cinzaClaro,
+        appBar: AppBar(
+          backgroundColor: C.azul,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          title: const Text('S.13',
+              style: TextStyle(fontWeight: FontWeight.bold,
+                  fontSize: 16, letterSpacing: 0.5)),
+          centerTitle: true,
+          actions: const [BadgeUsuario(), BotaoSalvar()],
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.lock_outline, size: 80, color: C.cinza),
+                SizedBox(height: 16),
+                Text('Acesso restrito',
+                    style: TextStyle(fontSize: 20,
+                        fontWeight: FontWeight.bold, color: C.azul)),
+                SizedBox(height: 8),
+                Text('Apenas administradores podem abrir esta aba.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14, color: C.cinza)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -2418,12 +2537,11 @@ class _S13PageState extends State<S13Page> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 0.5)),
         centerTitle: true,
         actions: [
-          if (pode)
-            IconButton(
-              tooltip: 'Limpar S.13',
-              icon: const Icon(Icons.delete_sweep, color: Colors.white),
-              onPressed: _limparTudo,
-            ),
+          IconButton(
+            tooltip: 'Limpar S.13',
+            icon: const Icon(Icons.delete_sweep, color: Colors.white),
+            onPressed: _limparTudo,
+          ),
           const BadgeUsuario(),
           const BotaoSalvar(),
         ],
@@ -2455,28 +2573,26 @@ class _S13PageState extends State<S13Page> {
                 ),
               ]),
             ),
-            if (pode) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFE0E0),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: C.vermelho),
-                ),
-                child: const Row(children: [
-                  Icon(Icons.warning_amber_rounded, color: C.vermelho, size: 16),
-                  SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      'Imprima o PDF antes de tocar no ícone 🗑️ para limpar as colunas.',
-                      style: TextStyle(fontSize: 11,
-                          color: C.vermelho, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ]),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFE0E0),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: C.vermelho),
               ),
-            ],
+              child: const Row(children: [
+                Icon(Icons.warning_amber_rounded, color: C.vermelho, size: 16),
+                SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Imprima o PDF antes de tocar no ícone 🗑️ para limpar as colunas.',
+                    style: TextStyle(fontSize: 11,
+                        color: C.vermelho, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ]),
+            ),
             const SizedBox(height: 10),
             Row(children: [
               const Text('Ano de Serviço: ',
@@ -2485,8 +2601,7 @@ class _S13PageState extends State<S13Page> {
                 width: 100,
                 child: TextField(
                   controller: _anoServico,
-                  readOnly: !pode,
-                  style: TextStyle(fontSize: 13, color: pode ? C.azul : C.cinza),
+                  style: const TextStyle(fontSize: 13, color: C.azul),
                   decoration: const InputDecoration(
                     border: UnderlineInputBorder(),
                     isDense: true,
@@ -2766,32 +2881,53 @@ class _EventosPageState extends State<EventosPage> {
   }
 
   void _toggleDia(int l, int g, int bit) {
-    if (!AuthStore.instance.podeEditarImportante) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Apenas administradores podem editar esta tela.'),
-        backgroundColor: C.vermelho,
-        duration: Duration(seconds: 1),
-      ));
-      return;
-    }
     EventosStore.instance.toggleDia(l, g, bit);
   }
 
   void _togglePg(int l, int g) {
-    if (!AuthStore.instance.podeEditarImportante) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Apenas administradores podem editar esta tela.'),
-        backgroundColor: C.vermelho,
-        duration: Duration(seconds: 1),
-      ));
-      return;
-    }
     EventosStore.instance.togglePg(l, g);
   }
 
   @override
   Widget build(BuildContext context) {
     final pode = AuthStore.instance.podeEditarImportante;
+
+    // 🔒 Bloqueia acesso para não-admins
+    if (!pode) {
+      return Scaffold(
+        backgroundColor: C.cinzaClaro,
+        appBar: AppBar(
+          backgroundColor: C.azul,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          title: const Text('EVENTOS',
+              style: TextStyle(fontWeight: FontWeight.bold,
+                  fontSize: 16, letterSpacing: 0.5)),
+          centerTitle: true,
+          actions: const [BadgeUsuario(), BotaoSalvar()],
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.lock_outline, size: 80, color: C.cinza),
+                SizedBox(height: 16),
+                Text('Acesso restrito',
+                    style: TextStyle(fontSize: 20,
+                        fontWeight: FontWeight.bold, color: C.azul)),
+                SizedBox(height: 8),
+                Text('Apenas administradores podem abrir esta aba.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14, color: C.cinza)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: C.cinzaClaro,
       appBar: AppBar(
@@ -2837,7 +2973,7 @@ class _EventosPageState extends State<EventosPage> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(10),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            _aviso(pode),
+            _aviso(),
             const SizedBox(height: 10),
             Container(
               decoration: BoxDecoration(
@@ -2850,7 +2986,7 @@ class _EventosPageState extends State<EventosPage> {
                 scrollDirection: Axis.horizontal,
                 child: Column(children: [
                   _cabecalho(),
-                  ...List.generate(totalLinhas, (l) => _linha(l, pode)),
+                  ...List.generate(totalLinhas, (l) => _linha(l)),
                 ]),
               ),
             ),
@@ -2860,7 +2996,7 @@ class _EventosPageState extends State<EventosPage> {
     );
   }
 
-  Widget _aviso(bool pode) {
+  Widget _aviso() {
     if (_query.isNotEmpty) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -2887,21 +3023,17 @@ class _EventosPageState extends State<EventosPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: pode ? C.bege : const Color(0xFFFFE0E0),
+        color: C.bege,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(children: [
-        Icon(pode ? Icons.info_outline : Icons.lock,
-            color: pode ? C.azul : C.vermelho, size: 16),
+        const Icon(Icons.info_outline, color: C.azul, size: 16),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            pode
-                ? 'Marque os dias (SEX/SÁB/DOM) e o pagamento (PG). Use a lupa.'
-                : 'Modo leitura: apenas admins editam.',
+            'Marque os dias (SEX/SÁB/DOM) e o pagamento (PG). Use a lupa.',
             style: TextStyle(fontSize: 11,
-                color: pode ? C.azul : C.vermelho,
-                fontWeight: FontWeight.w600),
+                color: C.azul, fontWeight: FontWeight.w600),
           ),
         ),
       ]),
@@ -2938,14 +3070,14 @@ class _EventosPageState extends State<EventosPage> {
     );
   }
 
-  Widget _linha(int l, bool pode) {
+  Widget _linha(int l) {
     return Container(
       color: l.isEven ? Colors.white : const Color(0xFFF9FAFB),
       child: Row(
         children: List.generate(totalGrupos, (g) {
           return Row(children: [
             _celNum(l, g),
-            _celNome(l, g, pode),
+            _celNome(l, g),
             _celDias(l, g),
             _celPg(l, g),
           ]);
@@ -2971,7 +3103,7 @@ class _EventosPageState extends State<EventosPage> {
     );
   }
 
-  Widget _celNome(int l, int g, bool pode) {
+  Widget _celNome(int l, int g) {
     final dest = _match(l, g);
     return Container(
       width: wNome,
@@ -2988,12 +3120,9 @@ class _EventosPageState extends State<EventosPage> {
       child: TextField(
         controller: _nomes[l][g],
         textAlign: TextAlign.center,
-        readOnly: !pode,
-        onChanged: pode
-            ? (v) => EventosStore.instance.setNome(l, g, v)
-            : null,
+        onChanged: (v) => EventosStore.instance.setNome(l, g, v),
         style: TextStyle(fontSize: 11,
-            color: pode ? C.azul : C.cinza,
+            color: C.azul,
             fontWeight: dest ? FontWeight.bold : FontWeight.normal),
         decoration: const InputDecoration(
           border: InputBorder.none,
