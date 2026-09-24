@@ -831,7 +831,6 @@ class _HomePageState extends State<HomePage> {
         onTap: () {
           // 🔒 Bloqueia Eventos, Serviço de Campo, S.13 e Dirigentes para não-admins
           if (acao == 'eventos' ||
-              acao == 'servico' ||
               acao == 's13' ||
               acao == 'dirigente') {
             if (!AuthStore.instance.podeEditarImportante) {
