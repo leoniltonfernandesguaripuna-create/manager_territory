@@ -1446,26 +1446,35 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
     );
   }
   Widget _areaFoto() {
-    return Container(
-      height: 240,
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
-      clipBehavior: Clip.antiAlias,
-      child: (_fotoMapa != null && _fotoMapa!.isNotEmpty)
-          ? Image.memory(
-              base64Decode(_fotoMapa!),
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const Center(
-                child: Icon(Icons.broken_image, size: 60, color: Colors.grey),
-              ),
-            )
-          : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Icon(Icons.image_outlined, size: 60, color: C.cinza.withValues(alpha: 0.6)),
-              const SizedBox(height: 10),
-              const Text('Nenhuma foto do mapa',
-                  style: TextStyle(fontSize: 13, color: C.cinza)),
-            ]),
-    );
-  }
+  return Container(
+    constraints: const BoxConstraints(minHeight: 200, maxHeight: 400),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+    ),
+    clipBehavior: Clip.antiAlias,
+    child: (_fotoMapa != null && _fotoMapa!.isNotEmpty)
+        ? Image.memory(
+            base64Decode(_fotoMapa!),
+            fit: BoxFit.contain,   // ✅ Mostra a foto inteira
+            errorBuilder: (_, __, ___) => const Center(
+              child: Icon(Icons.broken_image, size: 60, color: Colors.grey),
+            ),
+          )
+        : const SizedBox(
+            height: 240,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.image_outlined, size: 60, color: C.cinza),
+                SizedBox(height: 10),
+                Text('Nenhuma foto do mapa',
+                    style: TextStyle(fontSize: 13, color: C.cinza)),
+              ],
+            ),
+          ),
+  );
+}
   Widget _botaoFoto() {
     final pode = AuthStore.instance.podeEditarImportante;
     return SizedBox(
