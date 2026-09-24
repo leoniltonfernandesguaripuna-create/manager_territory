@@ -488,7 +488,6 @@ class QuadrasStore {
     dados.forEach((terr, raw) {
       List<List<int>> matriz;
       if (raw is Map) {
-        // ✅ formato novo: {0: [..], 1: [..]}
         matriz = List.generate(10, (l) {
           final linhaRaw = raw['$l'];
           if (linhaRaw is List) {
@@ -502,7 +501,6 @@ class QuadrasStore {
           return List.generate(14, (_) => 0);
         });
       } else if (raw is List) {
-        // formato antigo (caso tenha dados velhos)
         matriz = List.generate(10, (l) {
           if (l < raw.length && raw[l] is List) {
             final linha = raw[l] as List;
@@ -525,7 +523,6 @@ class QuadrasStore {
   static Future<void> _salvar(String territorio) async {
     final matriz = _dados[territorio];
     if (matriz == null) return;
-    // ✅ Converte List<List<int>> → Map<String, List<int>>
     final out = <String, dynamic>{};
     for (int i = 0; i < matriz.length; i++) {
       out['$i'] = matriz[i];
@@ -804,7 +801,7 @@ class _HomePageState extends State<HomePage> {
       {'icon': Icons.map_outlined, 'label': 'Territórios', 'acao': 'territorios'},
       {'icon': Icons.menu_book_outlined, 'label': 'Serviço de Campo', 'acao': 'servico'},
       {'icon': Icons.calendar_today_outlined, 'label': 'Eventos', 'acao': 'eventos'},
-      {'icon': Icons.person_pin_circle_outlined, 'label': 'Dirigente', 'acao': 'dirigente'},
+      {'icon': Icons.person_pin_circle_outlined, 'label': 'Dirigentes', 'acao': 'dirigente'},
       {'icon': Icons.assignment_outlined, 'label': 'S.13', 'acao': 's13'},
       {'icon': Icons.admin_panel_settings_outlined, 'label': 'Administrador', 'acao': 'admin'},
     ];
@@ -1079,7 +1076,6 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
     _ctrlObs.text = ObsStore.instance.get(widget.numero);
     _fotoMapa = MapasStore.get(widget.numero);
     _quadrasEstados = QuadrasStore.get(widget.numero);
-    // ✅ Carrega a grade 11x11 de dirigente
     for (int l = 0; l < 11; l++) {
       for (int c = 0; c < 11; c++) {
         _dirigenteControllers[l][c].text =
@@ -1271,15 +1267,8 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
     );
   }
 
+  // ✅ LIBERADO PARA TODOS
   void _alternarCelula(int linha, int coluna) {
-    if (!AuthStore.instance.podeEditarImportante) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Apenas administradores podem editar esta tela.'),
-        backgroundColor: C.vermelho,
-        duration: Duration(seconds: 1),
-      ));
-      return;
-    }
     setState(() {
       _quadrasEstados[linha][coluna] = (_quadrasEstados[linha][coluna] + 1) % 3;
       QuadrasStore.set(widget.numero, _quadrasEstados);
@@ -1568,7 +1557,6 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
   Widget _gradeDirigente() {
     const double w = 100;
     const double h = 44;
-    final pode = AuthStore.instance.podeEditarImportante;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1597,6 +1585,7 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
                           fontWeight: FontWeight.bold, fontSize: 11)),
                 );
               }
+              // ✅ LIBERADO PARA TODOS
               return Container(
                 width: w,
                 height: h,
@@ -1609,15 +1598,9 @@ class _DetalheTerritorioPageState extends State<DetalheTerritorioPage> {
                 child: TextField(
                   controller: _dirigenteControllers[linha][coluna],
                   textAlign: TextAlign.center,
-                  readOnly: !pode,
-                  onChanged: pode
-                      ? (v) => DirigenteTerritorioStore.set(
-                          widget.numero, linha, coluna, v)
-                      : null,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: pode ? C.azul : C.cinza,
-                  ),
+                  onChanged: (v) => DirigenteTerritorioStore.set(
+                      widget.numero, linha, coluna, v),
+                  style: const TextStyle(fontSize: 12, color: C.azul),
                   decoration: const InputDecoration(
                     border: InputBorder.none,
                     isDense: true,
@@ -2089,7 +2072,6 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
     );
   }
 }
-
 // ============== DIRIGENTE ==============
 class DirigentePage extends StatefulWidget {
   const DirigentePage({super.key});
@@ -2175,7 +2157,7 @@ class _DirigentePageState extends State<DirigentePage> {
         backgroundColor: C.azul,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('DIRIGENTE',
+        title: const Text('DIRIGENTES',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 0.5)),
         centerTitle: true,
         actions: const [BadgeUsuario(), BotaoSalvar()],
