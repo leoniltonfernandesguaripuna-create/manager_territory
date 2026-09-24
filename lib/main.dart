@@ -485,23 +485,52 @@ class QuadrasStore {
 
   static void carregar(Map<String, dynamic> dados) {
     _dados.clear();
-    dados.forEach((terr, list) {
-      if (list is List) {
-        final matriz = list.map((linha) {
-          if (linha is List) {
-            return linha.map((v) => int.tryParse(v.toString()) ?? 0).toList();
+    dados.forEach((terr, raw) {
+      List<List<int>> matriz;
+      if (raw is Map) {
+        // ✅ formato novo: {0: [..], 1: [..]}
+        matriz = List.generate(10, (l) {
+          final linhaRaw = raw['$l'];
+          if (linhaRaw is List) {
+            return List.generate(14, (c) {
+              if (c < linhaRaw.length) {
+                return int.tryParse(linhaRaw[c].toString()) ?? 0;
+              }
+              return 0;
+            });
           }
-          return <int>[];
-        }).toList();
-        _dados[terr] = matriz;
+          return List.generate(14, (_) => 0);
+        });
+      } else if (raw is List) {
+        // formato antigo (caso tenha dados velhos)
+        matriz = List.generate(10, (l) {
+          if (l < raw.length && raw[l] is List) {
+            final linha = raw[l] as List;
+            return List.generate(14, (c) {
+              if (c < linha.length) {
+                return int.tryParse(linha[c].toString()) ?? 0;
+              }
+              return 0;
+            });
+          }
+          return List.generate(14, (_) => 0);
+        });
+      } else {
+        return;
       }
+      _dados[terr] = matriz;
     });
   }
 
   static Future<void> _salvar(String territorio) async {
-    await Cloud.salvar('quadras', {
-      territorio: _dados[territorio],
-    });
+    final matriz = _dados[territorio];
+    if (matriz == null) return;
+    // ✅ Converte List<List<int>> → Map<String, List<int>>
+    final out = <String, dynamic>{};
+    for (int i = 0; i < matriz.length; i++) {
+      out['$i'] = matriz[i];
+    }
+    await Cloud.salvar('quadras', {territorio: out});
   }
 }
 
