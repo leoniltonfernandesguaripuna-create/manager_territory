@@ -6,6 +6,7 @@ import 'cloud.dart';
 import 'tema.dart';     
 import 'stores.dart';
 import 'widgets.dart';
+import 'pages.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
