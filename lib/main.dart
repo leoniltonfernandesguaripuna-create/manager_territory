@@ -531,26 +531,7 @@ class DirigenteTerritorioStore {
   static void set(String territorio, int linha, int coluna, String valor) {
     _dados.putIfAbsent(territorio, () => {});
     _dados[territorio]!['${linha}_$coluna'] = valor;
-    _salvar(territorio);
-  }
 
-  static void carregar(Map<String, dynamic> dados) {
-    _dados.clear();
-    dados.forEach((terr, map) {
-      if (map is Map) {
-        final m = <String, String>{};
-        map.forEach((k, v) => m[k] = v.toString());
-        _dados[terr] = m;
-      }
-    });
-  }
-
-  static Future<void> _salvar(String territorio) async {
-    await Cloud.salvar('dirigentes_territorio', {
-      territorio: _dados[territorio],
-    });
-  }
-}
 
 // ============== BOTÃO SALVAR ==============
 class BotaoSalvar extends StatefulWidget {
