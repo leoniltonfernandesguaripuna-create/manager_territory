@@ -207,33 +207,92 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+  
   Widget _cardMapa() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        const Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('Visão Geral do Território',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: C.azul)),
-          Icon(Icons.chevron_right, color: C.cinza),
-        ]),
-        const SizedBox(height: 12),
-        Container(
-          height: 150,
-          decoration: BoxDecoration(color: C.bege, borderRadius: BorderRadius.circular(12)),
-          child: Stack(children: [
-            Center(child: Icon(Icons.map_outlined, size: 60, color: C.cinza.withValues(alpha: 0.6))),
-            const Positioned(top: 25, left: 40,
-                child: Icon(Icons.location_on, color: C.azul, size: 28)),
-            const Positioned(top: 70, right: 80,
-                child: Icon(Icons.location_on, color: C.amarelo, size: 24)),
-            const Positioned(bottom: 20, right: 40,
-                child: Icon(Icons.location_on, color: C.azul, size: 28)),
-          ]),
+  return Row(
+    children: [
+      Expanded(
+        child: _botaoHome(
+          icon: Icons.person_pin_circle,
+          label: 'SERVO DE\nTERRITÓRIO',
+          onTap: () {
+            // TODO: navegar para Servo de Território
+          },
         ),
-      ]),
-    );
-  }
+      ),
+      const SizedBox(width: 10),
+      Expanded(
+        child: _botaoHome(
+          icon: Icons.event,
+          label: 'SERVO DE\nEVENTOS',
+          onTap: () {
+            // TODO: navegar para Servo de Eventos
+          },
+        ),
+      ),
+      const SizedBox(width: 10),
+      Expanded(
+        child: _botaoHome(
+          icon: Icons.menu_book,
+          label: 'TUTORIAL',
+          onTap: () {
+            // TODO: navegar para Tutorial
+          },
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _botaoHome({
+  required IconData icon,
+  required String label,
+  required VoidCallback onTap,
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      color: C.bege,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: C.azul.withValues(alpha: 0.25), width: 1.5),
+      boxShadow: [
+        BoxShadow(
+          color: C.azul.withValues(alpha: 0.08),
+          blurRadius: 6,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 36, color: C.azul),
+              const SizedBox(height: 10),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: C.azul,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.3,
+                  height: 1.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
   Widget _cardNotas() {
     return Container(
       padding: const EdgeInsets.all(16),
