@@ -3,7 +3,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'cloud.dart';
-import 'tema.dart';                    
+import 'tema.dart';     
+import 'stores.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
