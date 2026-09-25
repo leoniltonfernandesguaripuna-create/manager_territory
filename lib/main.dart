@@ -822,14 +822,27 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+  
   Widget _cardMenu({required IconData icon, required String label, required String acao}) {
-    return Material(
+  return Container(
+    decoration: BoxDecoration(
       color: C.bege,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: C.azul.withValues(alpha: 0.25), width: 1.5),
+      boxShadow: [
+        BoxShadow(
+          color: C.azul.withValues(alpha: 0.08),
+          blurRadius: 6,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Material(
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          // 🔒 Bloqueia Eventos, Serviço de Campo, S.13 e Dirigentes para não-admins
           if (acao == 'eventos' ||
               acao == 's13' ||
               acao == 'dirigente') {
@@ -867,9 +880,10 @@ class _HomePageState extends State<HomePage> {
           ]),
         ),
       ),
-    );
-  }
-  Widget _cardMapa() {
+    ),
+  );
+}
+  widgets_cardMapa() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
