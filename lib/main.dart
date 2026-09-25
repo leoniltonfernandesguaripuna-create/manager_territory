@@ -61,10 +61,18 @@ Future<void> _carregarDados() async {
     if (quadras != null) {
       QuadrasStore.carregar(quadras);
     }
-    final dirTerr = await Cloud.ler('dirigentes_territorio');
-    if (dirTerr != null) {
-      DirigenteTerritorioStore.carregar(dirTerr);
-    }
+    
+final dirTerr = await Cloud.ler('dirigentes_territorio');
+if (dirTerr != null) {
+  DirigenteTerritorioStore.carregar(dirTerr);
+}
+final grp = await Cloud.ler('grupos');
+if (grp != null && grp['lista'] != null) {
+  GruposStore.instance.carregar(List<Map<String, dynamic>>.from(
+    (grp['lista'] as List).map((e) => Map<String, dynamic>.from(e)),
+  ));
+}
+    
   } catch (_) {}
 }
 
