@@ -508,17 +508,6 @@ class QuadrasStore {
     });
   }
 
-  static Future<void> _salvar(String territorio) async {
-    final matriz = _dados[territorio];
-    if (matriz == null) return;
-    final out = <String, dynamic>{};
-    for (int i = 0; i < matriz.length; i++) {
-      out['$i'] = matriz[i];
-    }
-    await Cloud.salvar('quadras', {territorio: out});
-  }
-}
-
 
 // ============== HOME ==============
 class HomePage extends StatefulWidget {
