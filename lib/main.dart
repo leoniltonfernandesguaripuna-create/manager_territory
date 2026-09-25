@@ -823,7 +823,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
   
-  widget_cardMenu({required IconData icon, required String label, required String acao}) {
+  Widget _cardMenu({required IconData icon, required String label, required String acao}) {
   return Container(
     decoration: BoxDecoration(
       color: C.bege,
@@ -883,46 +883,49 @@ class _HomePageState extends State<HomePage> {
     ),
   );
 }
-  widgets_cardMapa() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        const Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('Visão Geral do Território',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: C.azul)),
-          Icon(Icons.chevron_right, color: C.cinza),
-        ]),
-        const SizedBox(height: 12),
-        Container(
-          height: 150,
-          decoration: BoxDecoration(color: C.bege, borderRadius: BorderRadius.circular(12)),
-          child: Stack(children: [
-            Center(child: Icon(Icons.map_outlined, size: 60, color: C.cinza.withValues(alpha: 0.6))),
-            const Positioned(top: 25, left: 40,
-                child: Icon(Icons.location_on, color: C.azul, size: 28)),
-            const Positioned(top: 70, right: 80,
-                child: Icon(Icons.location_on, color: C.amarelo, size: 24)),
-            const Positioned(bottom: 20, right: 40,
-                child: Icon(Icons.location_on, color: C.azul, size: 28)),
-          ]),
-        ),
-      ]),
-    );
-  }
-  Widget _cardNotas() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-      child: const Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text('Notas recentes do serviço',
+
+Widget _cardMapa() {
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      const Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Text('Visão Geral do Território',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: C.azul)),
-        SizedBox(height: 12),
-        Text('Nenhuma nota recente...',
-            style: TextStyle(color: C.cinza, fontStyle: FontStyle.italic, fontSize: 13)),
+        Icon(Icons.chevron_right, color: C.cinza),
       ]),
-    );
-  }
+      const SizedBox(height: 12),
+      Container(
+        height: 150,
+        decoration: BoxDecoration(color: C.bege, borderRadius: BorderRadius.circular(12)),
+        child: Stack(children: [
+          Center(child: Icon(Icons.map_outlined, size: 60, color: C.cinza.withValues(alpha: 0.6))),
+          const Positioned(top: 25, left: 40,
+              child: Icon(Icons.location_on, color: C.azul, size: 28)),
+          const Positioned(top: 70, right: 80,
+              child: Icon(Icons.location_on, color: C.amarelo, size: 24)),
+          const Positioned(bottom: 20, right: 40,
+              child: Icon(Icons.location_on, color: C.azul, size: 28)),
+        ]),
+      ),
+    ]),
+  );
+}
+
+Widget _cardNotas() {
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+    child: const Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Text('Notas recentes do serviço',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: C.azul)),
+      SizedBox(height: 12),
+      Text('Nenhuma nota recente...',
+          style: TextStyle(color: C.cinza, fontStyle: FontStyle.italic, fontSize: 13)),
+    ]),
+  );
+}
+
   Widget _bottomNav() {
     final items = [
       {'icon': Icons.home, 'label': 'Home'},
