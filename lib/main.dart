@@ -823,7 +823,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
   
-  Widget _cardMenu({required IconData icon, required String label, required String acao}) {
+  widget_cardMenu({required IconData icon, required String label, required String acao}) {
   return Container(
     decoration: BoxDecoration(
       color: C.bege,
