@@ -470,3 +470,136 @@ class DirigenteTerritorioStore {
     });
   }
 }
+// ============== GRUPOS (SERVO DE TERRITÓRIO) ==============
+class Grupo {
+  String id;
+  String nome;
+  /// Lista de `numero` dos territórios (ex.: 'T-1', 'T-2').
+  List<String> territorios;
+  /// Número do território que o grupo está trabalhando agora.
+  String? ativo;
+
+  static const int maxTerritorios = 6;
+
+  Grupo({
+    required this.id,
+    required this.nome,
+    List<String>? territorios,
+    this.ativo,
+  }) : territorios = territorios ?? [];
+
+  bool get cheio => territorios.length >= maxTerritorios;
+  bool get vazio => territorios.isEmpty;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'nome': nome,
+        'territorios': territorios,
+        'ativo': ativo,
+      };
+
+  factory Grupo.fromJson(Map<String, dynamic> j) => Grupo(
+        id: j['id']?.toString() ?? '',
+        nome: j['nome']?.toString() ?? '',
+        territorios: (j['territorios'] as List?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [],
+        ativo: j['ativo']?.toString(),
+      );
+}
+
+class GruposStore extends ChangeNotifier {
+  static final GruposStore instance = GruposStore._();
+  GruposStore._();
+
+  final List<Grupo> lista = [];
+
+  Grupo? porId(String id) {
+    for (final g in lista) {
+      if (g.id == id) return g;
+    }
+    return null;
+  }
+
+  /// Retorna false se já existir um grupo com esse nome.
+  bool adicionar(String nome) {
+    final n = nome.trim();
+    if (n.isEmpty) return false;
+    if (lista.any((g) => g.nome.toLowerCase() == n.toLowerCase())) {
+      return false;
+    }
+    lista.add(Grupo(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      nome: n,
+    ));
+    notifyListeners();
+    _salvar();
+    return true;
+  }
+
+  void renomear(String id, String novoNome) {
+    final g = porId(id);
+    if (g == null) return;
+    final n = novoNome.trim();
+    if (n.isEmpty) return;
+    g.nome = n;
+    notifyListeners();
+    _salvar();
+  }
+
+  void excluir(String id) {
+    lista.removeWhere((g) => g.id == id);
+    notifyListeners();
+    _salvar();
+  }
+
+  /// Retorna uma mensagem de erro, ou null se deu certo.
+  String? adicionarTerritorio(String grupoId, String territorioNumero) {
+    final g = porId(grupoId);
+    if (g == null) return 'Grupo não encontrado.';
+    if (g.cheio) return 'Este grupo já tem ${Grupo.maxTerritorios} territórios.';
+    if (g.territorios.contains(territorioNumero)) {
+      return 'Este território já está no grupo.';
+    }
+    g.territorios.add(territorioNumero);
+    g.ativo ??= territorioNumero; // primeiro vira o ativo
+    notifyListeners();
+    _salvar();
+    return null;
+  }
+
+  void removerTerritorio(String grupoId, String territorioNumero) {
+    final g = porId(grupoId);
+    if (g == null) return;
+    g.territorios.remove(territorioNumero);
+    if (g.ativo == territorioNumero) {
+      g.ativo = g.territorios.isEmpty ? null : g.territorios.first;
+    }
+    notifyListeners();
+    _salvar();
+  }
+
+  void definirAtivo(String grupoId, String territorioNumero) {
+    final g = porId(grupoId);
+    if (g == null) return;
+    if (!g.territorios.contains(territorioNumero)) return;
+    g.ativo = territorioNumero;
+    notifyListeners();
+    _salvar();
+  }
+
+  void carregar(List<Map<String, dynamic>> dados) {
+    lista.clear();
+    for (final d in dados) {
+      lista.add(Grupo.fromJson(d));
+    }
+    notifyListeners();
+  }
+
+  Future<void> _salvar() async {
+    await Cloud.salvar('grupos', {
+      'lista': lista.map((g) => g.toJson()).toList(),
+    });
+  }
+}
