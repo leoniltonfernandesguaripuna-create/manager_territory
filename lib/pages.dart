@@ -219,10 +219,11 @@ class _HomePageState extends State<HomePage> {
           onTap: () {
   Navigator.push(
     context,
-    MaterialPageRoute(builder: (_) => const ServoTerritorioPage()),
-  );
-},
-
+    MaterialPageRoute(builder: (_) => const ServoTerritorioPage()),},
+      ),
+     ),
+    ),
+ 
     const SizedBox(width: 10),
       Expanded(
         child: _botaoHome(
