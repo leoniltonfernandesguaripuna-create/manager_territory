@@ -78,14 +78,30 @@ class AppState extends ChangeNotifier {
 class Territorio {
   String numero;
   String nome;
-  Territorio({required this.numero, required this.nome});
-  Map<String, dynamic> toJson() => {'numero': numero, 'nome': nome};
+
+class Territorio {
+  String numero;
+  String nome;
+  bool liberado;
+
+  Territorio({
+    required this.numero,
+    required this.nome,
+    this.liberado = false,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'numero': numero,
+        'nome': nome,
+        'liberado': liberado,
+      };
+
   factory Territorio.fromJson(Map<String, dynamic> j) => Territorio(
         numero: j['numero']?.toString() ?? '',
         nome: j['nome']?.toString() ?? '',
+        liberado: j['liberado'] == true,
       );
 }
-
 class TerritoriosStore extends ChangeNotifier {
   static final TerritoriosStore instance = TerritoriosStore._();
   TerritoriosStore._();
