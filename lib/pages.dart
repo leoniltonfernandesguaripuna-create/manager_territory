@@ -420,42 +420,88 @@ class _TerritoriosPageState extends State<TerritoriosPage> {
           itemCount: lista.length,
           separatorBuilder: (_, __) => const SizedBox(height: 14),
           itemBuilder: (context, index) {
-            final t = lista[index];
-            return Material(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              elevation: 2,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(14),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => DetalheTerritorioPage(numero: t.numero, nome: t.nome),
+  final t = lista[index];
+  final liberado = t.liberado;
+
+  return Material(
+    color: liberado ? Colors.white : const Color(0xFFEDEDED),
+    borderRadius: BorderRadius.circular(14),
+    elevation: liberado ? 2 : 0,
+    child: InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () {
+        if (!liberado) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+              'Território bloqueado. Peça ao servo de território para liberar.',
+            ),
+            backgroundColor: C.vermelho,
+            duration: Duration(seconds: 3),
+          ));
+          return;
+        }
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DetalheTerritorioPage(
+              numero: t.numero,
+              nome: t.nome,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: 16, vertical: 18),
+        child: Row(children: [
+          Icon(
+            liberado ? Icons.map : Icons.lock_outline,
+            color: liberado ? C.azul : C.cinza,
+            size: 38,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${t.numero} ${t.nome}',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: liberado ? C.azul : C.cinza,
                   ),
                 ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                  child: Row(children: [
-                    const Icon(Icons.map, color: C.azul, size: 38),
-                    const SizedBox(width: 16),
-                    Expanded(child: Text('${t.numero} ${t.nome}',
-                        style: const TextStyle(fontSize: 17,
-                            fontWeight: FontWeight.bold, color: C.azul))),
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: C.azul, size: 22),
-                      onPressed: () => _editarNome(index),
+                if (!liberado)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 2),
+                    child: Text(
+                      'Bloqueado',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: C.cinza,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
-                    const Icon(Icons.play_arrow, color: C.amarelo, size: 30),
-                  ]),
-                ),
-              ),
-            );
-          },
-        ),
+                  ),
+              ],
+            ),
+          ),
+          if (liberado) ...[
+            IconButton(
+              icon: const Icon(Icons.edit,
+                  color: C.azul, size: 22),
+              onPressed: () => _editarNome(index),
+            ),
+            const Icon(Icons.play_arrow,
+                color: C.amarelo, size: 30),
+          ] else
+            const Icon(Icons.lock, color: C.cinza, size: 22),
+        ]),
       ),
-    );
-  }
-}
+    ),
+  );
+},
 
 // ============== DETALHE TERRITÓRIO ==============
 class DetalheTerritorioPage extends StatefulWidget {
