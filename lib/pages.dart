@@ -217,11 +217,13 @@ class _HomePageState extends State<HomePage> {
           icon: Icons.person_pin_circle,
           label: 'SERVO DE\nTERRITÓRIO',
           onTap: () {
-            // TODO: navegar para Servo de Território
-          },
-        ),
-      ),
-      const SizedBox(width: 10),
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const ServoTerritorioPage()),
+  );
+},
+
+    const SizedBox(width: 10),
       Expanded(
         child: _botaoHome(
           icon: Icons.event,
