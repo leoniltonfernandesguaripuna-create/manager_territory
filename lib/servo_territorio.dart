@@ -164,7 +164,7 @@ class _ServoTerritorioPageState extends State<ServoTerritorioPage> {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.fromLTRB(14, 14, 6, 14),
           child: Row(children: [
             const CircleAvatar(
               backgroundColor: C.bege,
@@ -172,7 +172,7 @@ class _ServoTerritorioPageState extends State<ServoTerritorioPage> {
               radius: 24,
               child: Icon(Icons.groups),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,16 +188,188 @@ class _ServoTerritorioPageState extends State<ServoTerritorioPage> {
                     Row(children: [
                       const Icon(Icons.play_circle, color: C.verde, size: 16),
                       const SizedBox(width: 4),
-                      Text('Trabalhando: ${g.ativo}',
-                          style: const TextStyle(fontSize: 12,
-                              color: C.verde, fontWeight: FontWeight.bold)),
+                      Expanded(
+                        child: Text('Trabalhando: ${g.ativo}',
+                            style: const TextStyle(fontSize: 12,
+                                color: C.verde, fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis),
+                      ),
                     ]),
                   ],
                 ],
               ),
             ),
+            // Botão "+ território" direto no card
+            if (!g.cheio)
+              IconButton(
+                tooltip: 'Adicionar território',
+                icon: const Icon(Icons.add_circle, color: C.azul, size: 28),
+                onPressed: () => _escolherTerritorio(context, g),
+              ),
             const Icon(Icons.chevron_right, color: C.azul),
+            const SizedBox(width: 4),
           ]),
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// BOTTOM SHEET — escolher território com busca
+// =============================================================================
+Future<String?> _mostrarSeletorTerritorio(
+  BuildContext context,
+  Grupo grupo,
+) async {
+  final disponiveis = TerritoriosStore.instance.lista
+      .where((t) => !grupo.territorios.contains(t.numero))
+      .toList();
+
+  if (disponiveis.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Todos os territórios já estão neste grupo.'),
+      backgroundColor: C.vermelho,
+    ));
+    return null;
+  }
+
+  return showModalBottomSheet<String>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (_) => _SeletorTerritorioSheet(
+      disponiveis: disponiveis,
+      onEscolher: (numero) => Navigator.pop(context, numero),
+    ),
+  );
+}
+
+class _SeletorTerritorioSheet extends StatefulWidget {
+  const _SeletorTerritorioSheet({
+    required this.disponiveis,
+    required this.onEscolher,
+  });
+
+  final List<Territorio> disponiveis;
+  final ValueChanged<String> onEscolher;
+
+  @override
+  State<_SeletorTerritorioSheet> createState() => _SeletorTerritorioSheetState();
+}
+
+class _SeletorTerritorioSheetState extends State<_SeletorTerritorioSheet> {
+  final TextEditingController _busca = TextEditingController();
+  late List<Territorio> _filtrados;
+
+  @override
+  void initState() {
+    super.initState();
+    _filtrados = widget.disponiveis;
+    _busca.addListener(_filtrar);
+  }
+
+  @override
+  void dispose() {
+    _busca.dispose();
+    super.dispose();
+  }
+
+  void _filtrar() {
+    final q = _busca.text.trim().toLowerCase();
+    setState(() {
+      if (q.isEmpty) {
+        _filtrados = widget.disponiveis;
+      } else {
+        _filtrados = widget.disponiveis.where((t) {
+          return t.numero.toLowerCase().contains(q) ||
+              t.nome.toLowerCase().contains(q);
+        }).toList();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    return Padding(
+      padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
+      child: SizedBox(
+        height: media.size.height * 0.75,
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: C.cinza,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text('Escolher território',
+                style: TextStyle(fontSize: 16,
+                    fontWeight: FontWeight.bold, color: C.azul)),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: _busca,
+                autofocus: false,
+                decoration: InputDecoration(
+                  hintText: 'Buscar por número ou nome...',
+                  prefixIcon: const Icon(Icons.search, color: C.azul),
+                  suffixIcon: _busca.text.isEmpty
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.close, size: 18),
+                          onPressed: () {
+                            _busca.clear();
+                            _filtrar();
+                          },
+                        ),
+                  isDense: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: _filtrados.isEmpty
+                  ? const Center(
+                      child: Text('Nenhum território encontrado.',
+                          style: TextStyle(color: C.cinza)),
+                    )
+                  : ListView.builder(
+                      itemCount: _filtrados.length,
+                      itemBuilder: (_, i) {
+                        final t = _filtrados[i];
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: C.bege,
+                            foregroundColor: C.azul,
+                            child: Text(
+                              t.numero.replaceAll('T-', ''),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          title: Text(t.nome,
+                              style: const TextStyle(color: C.azul,
+                                  fontWeight: FontWeight.w600)),
+                          subtitle: Text(t.numero),
+                          onTap: () => widget.onEscolher(t.numero),
+                        );
+                      },
+                    ),
+            ),
+          ],
         ),
       ),
     );
@@ -286,7 +458,7 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
       floatingActionButton: grupo.cheio
           ? null
           : FloatingActionButton.extended(
-              onPressed: () => _escolherTerritorio(grupo),
+              onPressed: () => _escolherTerritorio(context, grupo),
               backgroundColor: C.azul,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.add_location_alt),
@@ -441,79 +613,24 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
       GruposStore.instance.removerTerritorio(g.id, numero);
     }
   }
+}
 
-  Future<void> _escolherTerritorio(Grupo grupo) async {
-    // Só mostra territórios que ainda NÃO estão neste grupo.
-    final disponiveis = TerritoriosStore.instance.lista
-        .where((t) => !grupo.territorios.contains(t.numero))
-        .toList();
+// =============================================================================
+// Função compartilhada de "escolher território"
+// =============================================================================
 
-    if (disponiveis.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Todos os territórios já estão neste grupo.'),
-        backgroundColor: C.vermelho,
-      ));
-      return;
-    }
+/// Abre o seletor, e se o usuário escolher, adiciona ao grupo.
+/// Retorna `true` se algo foi adicionado.
+Future<bool> _escolherTerritorio(BuildContext context, Grupo grupo) async {
+  final escolhido = await _mostrarSeletorTerritorio(context, grupo);
+  if (escolhido == null || !context.mounted) return false;
 
-    final escolhido = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('Escolher território',
-                  style: TextStyle(fontSize: 16,
-                      fontWeight: FontWeight.bold, color: C.azul)),
-            ),
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: disponiveis.length,
-                itemBuilder: (_, i) {
-                  final t = disponiveis[i];
-                  final emOutro = GruposStore.instance.lista.any(
-                    (g) => g.id != grupo.id &&
-                        g.territorios.contains(t.numero),
-                  );
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: C.bege,
-                      foregroundColor: C.azul,
-                      child: Text(t.numero.replaceAll('T-', ''),
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                    title: Text(t.nome,
-                        style: const TextStyle(color: C.azul,
-                            fontWeight: FontWeight.w600)),
-                    subtitle: Text(t.numero),
-                    trailing: emOutro
-                        ? const Text('Em outro grupo',
-                            style: TextStyle(fontSize: 11, color: C.amarelo))
-                        : null,
-                    onTap: () => Navigator.pop(ctx, t.numero),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-
-    if (escolhido == null || !mounted) return;
-    final erro = GruposStore.instance.adicionarTerritorio(grupo.id, escolhido);
-    if (erro != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(erro), backgroundColor: C.vermelho,
-      ));
-    }
+  final erro = GruposStore.instance.adicionarTerritorio(grupo.id, escolhido);
+  if (erro != null && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(erro), backgroundColor: C.vermelho,
+    ));
+    return false;
   }
+  return true;
 }
