@@ -490,66 +490,102 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
   }
 
   Widget _linhaTerritorio(Grupo grupo, String numero) {
-    final terr = TerritoriosStore.instance.lista.firstWhere(
-      (t) => t.numero == numero,
-      orElse: () => Territorio(numero: numero, nome: '(removido)'),
-    );
-    final ativo = grupo.ativo == numero;
+  final terr = TerritoriosStore.instance.lista.firstWhere(
+    (t) => t.numero == numero,
+    orElse: () => Territorio(numero: numero, nome: '(removido)'),
+  );
+  final ativo = grupo.ativo == numero;
 
-    return Material(
-      color: ativo ? const Color(0xFFE6F4EA) : Colors.white,
+  return Material(
+    color: ativo ? const Color(0xFFE6F4EA) : Colors.white,
+    borderRadius: BorderRadius.circular(12),
+    elevation: 1,
+    child: InkWell(
       borderRadius: BorderRadius.circular(12),
-      elevation: 1,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => GruposStore.instance.definirAtivo(grupo.id, numero),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(children: [
-            Container(
-              width: 44, height: 44,
-              decoration: BoxDecoration(
-                color: ativo ? C.verde : C.bege,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              alignment: Alignment.center,
-              child: Text(numero.replaceAll('T-', ''),
-                  style: TextStyle(
-                      color: ativo ? Colors.white : C.azul,
-                      fontWeight: FontWeight.bold, fontSize: 16)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('$numero ${terr.nome}',
-                      style: const TextStyle(fontSize: 14,
-                          fontWeight: FontWeight.bold, color: C.azul)),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      ativo ? 'Em andamento'
-                            : 'Toque para marcar como ativo',
-                      style: TextStyle(fontSize: 11,
-                          color: ativo ? C.verde : C.cinza,
-                          fontWeight: ativo ? FontWeight.bold : FontWeight.normal),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.remove_circle_outline,
-                  color: Colors.redAccent),
-              tooltip: 'Remover do grupo',
-              onPressed: () => _confirmarRemover(grupo, numero),
-            ),
-          ]),
+      // Toque no card abre o território
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DetalheTerritorioPage(
+            numero: terr.numero,
+            nome: terr.nome,
+          ),
         ),
       ),
-    );
-  }
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
+        child: Row(children: [
+          // Rádio: marca/desmarca como ativo (só 1 por grupo)
+          Radio<bool>(
+            value: true,
+            groupValue: ativo,
+            activeColor: C.verde,
+            onChanged: (_) {
+              if (!ativo) {
+                GruposStore.instance.definirAtivo(grupo.id, numero);
+              }
+            },
+          ),
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: ativo ? C.verde : C.bege,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              numero.replaceAll('T-', ''),
+              style: TextStyle(
+                color: ativo ? Colors.white : C.azul,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$numero ${terr.nome}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: C.azul,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    ativo
+                        ? 'Em andamento • toque para abrir'
+                        : 'Toque para abrir o território',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: ativo ? C.verde : C.cinza,
+                      fontWeight:
+                          ativo ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.remove_circle_outline,
+              color: Colors.redAccent,
+            ),
+            tooltip: 'Remover do grupo',
+            onPressed: () => _confirmarRemover(grupo, numero),
+          ),
+        ]),
+      ),
+    ),
+  );
+}
 
   Future<void> _renomear(Grupo g) async {
     final nome = await _pedirNome(
