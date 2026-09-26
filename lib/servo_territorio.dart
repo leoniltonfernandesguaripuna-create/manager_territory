@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'tema.dart';
 import 'stores.dart';
 import 'widgets.dart';
-
+import 'pages.dart';
 // -----------------------------------------------------------------------------
 // Diálogo de texto reutilizável
 // -----------------------------------------------------------------------------
