@@ -19,6 +19,7 @@ class AuthStore extends ChangeNotifier {
     if (_usuario == 'PRINCIPAL') return 'Admin Principal';
     return 'Admin $_usuario';
   }
+
   bool login(String tipo, String senha) {
     if (tipo == 'PRINCIPAL') {
       if (senha == senhaPrincipal) {
@@ -35,10 +36,12 @@ class AuthStore extends ChangeNotifier {
     }
     return false;
   }
+
   void logout() {
     _usuario = null;
     notifyListeners();
   }
+
   bool alterarSenhaAdmin(String letra, String novaSenha) {
     if (!isPrincipal) return false;
     if (!admins.containsKey(letra)) return false;
@@ -47,6 +50,7 @@ class AuthStore extends ChangeNotifier {
     Cloud.salvar('admins', {'senhas': admins});
     return true;
   }
+
   void carregarAdmins(Map<String, String> dados) {
     admins.clear();
     admins.addAll(dados);
@@ -63,6 +67,7 @@ class AppState extends ChangeNotifier {
     lastSaved = DateTime.now();
     notifyListeners();
   }
+
   String get lastSavedText {
     if (lastSaved == null) return 'Nunca salvo';
     final d = lastSaved!;
@@ -75,10 +80,6 @@ class AppState extends ChangeNotifier {
 }
 
 // ============== TERRITÓRIO ==============
-class Territorio {
-  String numero;
-  String nome;
-
 class Territorio {
   String numero;
   String nome;
@@ -102,6 +103,7 @@ class Territorio {
         liberado: j['liberado'] == true,
       );
 }
+
 class TerritoriosStore extends ChangeNotifier {
   static final TerritoriosStore instance = TerritoriosStore._();
   TerritoriosStore._();
@@ -121,11 +123,13 @@ class TerritoriosStore extends ChangeNotifier {
     Territorio(numero: 'T-13', nome: 'São José'),
     Territorio(numero: 'T-14', nome: 'Ipê Amarelo'),
   ];
+
   void renomear(int index, String novoNome) {
     lista[index].nome = novoNome;
     notifyListeners();
     _salvar();
   }
+
   void carregar(List<Map<String, dynamic>> dados) {
     if (dados.isEmpty) return;
     lista.clear();
@@ -134,6 +138,7 @@ class TerritoriosStore extends ChangeNotifier {
     }
     notifyListeners();
   }
+
   Future<void> _salvar() async {
     await Cloud.salvar('territorios', {
       'lista': lista.map((t) => t.toJson()).toList(),
@@ -147,11 +152,13 @@ class Designacao {
   String dataDesignacao;
   String dataConclusao;
   Designacao({this.nome = '', this.dataDesignacao = '', this.dataConclusao = ''});
+
   Map<String, dynamic> toJson() => {
         'nome': nome,
         'dataDesignacao': dataDesignacao,
         'dataConclusao': dataConclusao,
       };
+
   factory Designacao.fromJson(Map<String, dynamic> j) => Designacao(
         nome: j['nome']?.toString() ?? '',
         dataDesignacao: j['dataDesignacao']?.toString() ?? '',
@@ -246,16 +253,19 @@ class ObsStore extends ChangeNotifier {
   ObsStore._();
   final Map<String, String> _obs = {};
   String get(String territorio) => _obs[territorio] ?? '';
+
   void set(String territorio, String texto) {
     _obs[territorio] = texto;
     notifyListeners();
     _salvar();
   }
+
   void carregar(Map<String, dynamic> dados) {
     _obs.clear();
     dados.forEach((k, v) => _obs[k] = v.toString());
     notifyListeners();
   }
+
   Future<void> _salvar() async {
     await Cloud.salvar('observacoes', {'dados': _obs});
   }
@@ -268,9 +278,14 @@ class DirigentesStore {
     ['Irmão Marcos Lima', 'Irmão André Costa', 'Irmão Rafael Alves'],
     ['Irmão Lucas Pereira', 'Irmão Mateus Rocha', 'Irmão Tiago Ribeiro'],
   ];
+
   static List<String> validos(int coluna) {
-    return nomes[coluna].map((n) => n.trim()).where((n) => n.isNotEmpty).toList();
+    return nomes[coluna]
+        .map((n) => n.trim())
+        .where((n) => n.isNotEmpty)
+        .toList();
   }
+
   static void setAt(int coluna, int index, String valor) {
     while (nomes[coluna].length <= index) {
       nomes[coluna].add('');
@@ -282,6 +297,7 @@ class DirigentesStore {
     }
     Cloud.salvar('dirigentes', {'nomes': nomesMap});
   }
+
   static void carregar(List<List<String>> dados) {
     if (dados.isEmpty) return;
     nomes = dados;
@@ -486,13 +502,12 @@ class DirigenteTerritorioStore {
     });
   }
 }
+
 // ============== GRUPOS (SERVO DE TERRITÓRIO) ==============
 class Grupo {
   String id;
   String nome;
-  /// Lista de `numero` dos territórios (ex.: 'T-1', 'T-2').
   List<String> territorios;
-  /// Número do território que o grupo está trabalhando agora.
   String? ativo;
 
   static const int maxTerritorios = 6;
@@ -517,10 +532,8 @@ class Grupo {
   factory Grupo.fromJson(Map<String, dynamic> j) => Grupo(
         id: j['id']?.toString() ?? '',
         nome: j['nome']?.toString() ?? '',
-        territorios: (j['territorios'] as List?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            [],
+        territorios:
+            (j['territorios'] as List?)?.map((e) => e.toString()).toList() ?? [],
         ativo: j['ativo']?.toString(),
       );
 }
@@ -538,13 +551,10 @@ class GruposStore extends ChangeNotifier {
     return null;
   }
 
-  /// Retorna false se já existir um grupo com esse nome.
   bool adicionar(String nome) {
     final n = nome.trim();
     if (n.isEmpty) return false;
-    if (lista.any((g) => g.nome.toLowerCase() == n.toLowerCase())) {
-      return false;
-    }
+    if (lista.any((g) => g.nome.toLowerCase() == n.toLowerCase())) return false;
     lista.add(Grupo(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       nome: n,
@@ -566,11 +576,11 @@ class GruposStore extends ChangeNotifier {
 
   void excluir(String id) {
     lista.removeWhere((g) => g.id == id);
+    _sincronizarLiberados();
     notifyListeners();
     _salvar();
   }
 
-  /// Retorna uma mensagem de erro, ou null se deu certo.
   String? adicionarTerritorio(String grupoId, String territorioNumero) {
     final g = porId(grupoId);
     if (g == null) return 'Grupo não encontrado.';
@@ -579,7 +589,8 @@ class GruposStore extends ChangeNotifier {
       return 'Este território já está no grupo.';
     }
     g.territorios.add(territorioNumero);
-    g.ativo ??= territorioNumero; // primeiro vira o ativo
+    g.ativo ??= territorioNumero;
+    _sincronizarLiberados();
     notifyListeners();
     _salvar();
     return null;
@@ -592,6 +603,7 @@ class GruposStore extends ChangeNotifier {
     if (g.ativo == territorioNumero) {
       g.ativo = g.territorios.isEmpty ? null : g.territorios.first;
     }
+    _sincronizarLiberados();
     notifyListeners();
     _salvar();
   }
@@ -610,7 +622,20 @@ class GruposStore extends ChangeNotifier {
     for (final d in dados) {
       lista.add(Grupo.fromJson(d));
     }
+    _sincronizarLiberados();
     notifyListeners();
+  }
+
+  /// Atualiza o campo `liberado` de cada território:
+  /// fica liberado se está em PELO MENOS UM grupo.
+  void _sincronizarLiberados() {
+    final territorios = TerritoriosStore.instance.lista;
+    for (final t in territorios) {
+      final emAlgumGrupo =
+          lista.any((g) => g.territorios.contains(t.numero));
+      t.liberado = emAlgumGrupo;
+    }
+    TerritoriosStore.instance.notifyListeners();
   }
 
   Future<void> _salvar() async {
