@@ -449,60 +449,185 @@ class _TerritoriosPageState extends State<TerritoriosPage> {
             ),
           ),
         );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: 16, vertical: 18),
-        child: Row(children: [
-          Icon(
-            liberado ? Icons.map : Icons.lock_outline,
-            color: liberado ? C.azul : C.cinza,
-            size: 38,
+        
+
+// ============== TERRITÓRIOS ==============
+class TerritoriosPage extends StatefulWidget {
+  const TerritoriosPage({super.key});
+  @override
+  State<TerritoriosPage> createState() => _TerritoriosPageState();
+}
+
+class _TerritoriosPageState extends State<TerritoriosPage> {
+  @override
+  void initState() {
+    super.initState();
+    TerritoriosStore.instance.addListener(_onChanged);
+    AuthStore.instance.addListener(_onChanged);
+  }
+
+  @override
+  void dispose() {
+    TerritoriosStore.instance.removeListener(_onChanged);
+    AuthStore.instance.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _editarNome(int index) {
+    final t = TerritoriosStore.instance.lista[index];
+    final ctrl = TextEditingController(text: t.nome);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Renomear ${t.numero}'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Nome do território',
+            border: OutlineInputBorder(),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${t.numero} ${t.nome}',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: liberado ? C.azul : C.cinza,
-                  ),
-                ),
-                if (!liberado)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 2),
-                    child: Text(
-                      'Bloqueado',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: C.cinza,
-                        fontStyle: FontStyle.italic,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: C.azul),
+            onPressed: () {
+              final novo = ctrl.text.trim();
+              if (novo.isNotEmpty) {
+                TerritoriosStore.instance.renomear(index, novo);
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('Salvar',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final lista = TerritoriosStore.instance.lista;
+    return Scaffold(
+      backgroundColor: C.cinzaClaro,
+      appBar: AppBar(
+        backgroundColor: C.azul,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        title: const Text('TERRITÓRIOS DA CONGREGAÇÃO',
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                letterSpacing: 0.5)),
+        centerTitle: true,
+        actions: const [BadgeUsuario(), BotaoSalvar()],
+      ),
+      body: SafeArea(
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          itemCount: lista.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 14),
+          itemBuilder: (context, index) {
+            final t = lista[index];
+            final liberado = t.liberado;
+
+            return Material(
+              color: liberado ? Colors.white : const Color(0xFFEDEDED),
+              borderRadius: BorderRadius.circular(14),
+              elevation: liberado ? 2 : 0,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () {
+                  if (!liberado) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Território bloqueado. Peça ao servo de território para liberar.',
+                        ),
+                        backgroundColor: C.vermelho,
+                        duration: Duration(seconds: 3),
+                      ),
+                    );
+                    return;
+                  }
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => DetalheTerritorioPage(
+                        numero: t.numero,
+                        nome: t.nome,
                       ),
                     ),
-                  ),
-              ],
-            ),
-          ),
-          if (liberado) ...[
-            IconButton(
-              icon: const Icon(Icons.edit,
-                  color: C.azul, size: 22),
-              onPressed: () => _editarNome(index),
-            ),
-            const Icon(Icons.play_arrow,
-                color: C.amarelo, size: 30),
-          ] else
-            const Icon(Icons.lock, color: C.cinza, size: 22),
-        ]),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 18),
+                  child: Row(children: [
+                    Icon(
+                      liberado ? Icons.map : Icons.lock_outline,
+                      color: liberado ? C.azul : C.cinza,
+                      size: 38,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${t.numero} ${t.nome}',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: liberado ? C.azul : C.cinza,
+                            ),
+                          ),
+                          if (!liberado)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 2),
+                              child: Text(
+                                'Bloqueado',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: C.cinza,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (liberado) ...[
+                      IconButton(
+                        icon: const Icon(Icons.edit,
+                            color: C.azul, size: 22),
+                        onPressed: () => _editarNome(index),
+                      ),
+                      const Icon(Icons.play_arrow,
+                          color: C.amarelo, size: 30),
+                    ] else
+                      const Icon(Icons.lock, color: C.cinza, size: 22),
+                  ]),
+                ),
+              ),
+            );
+          },
+        ),
       ),
-    ),
-  );
-},
+    );
+  }
+}
 
+        
 // ============== DETALHE TERRITÓRIO ==============
 class DetalheTerritorioPage extends StatefulWidget {
   final String numero;
