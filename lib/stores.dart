@@ -603,37 +603,3 @@ class GruposStore extends ChangeNotifier {
     });
   }
 }
-// ============== GRUPOS (SERVO DE TERRITÓRIO) ==============
-class Grupo {
-  String id;
-  String nome;
-  List<String> territorios;
-  String? ativo;
-
-  static const int maxTerritorios = 6;
-
-  Grupo({
-    required this.id,
-    required this.nome,
-    List<String>? territorios,
-    this.ativo,
-  }) : territorios = territorios ?? [];
-
-  bool get cheio => territorios.length >= maxTerritorios;
-  bool get vazio => territorios.isEmpty;
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'nome': nome,
-        'territorios': territorios,
-        'ativo': ativo,
-      };
-
-  factory Grupo.fromJson(Map<String, dynamic> j) => Grupo(
-        id: j['id']?.toString() ?? '',
-        nome: j['nome']?.toString() ?? '',
-        territorios:
-            (j['territorios'] as List?)?.map((e) => e.toString()).toList() ?? [],
-        ativo: j['ativo']?.toString(),
-      );
-}
