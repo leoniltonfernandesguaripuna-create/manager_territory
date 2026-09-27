@@ -2821,6 +2821,50 @@ class _AdminPageState extends State<AdminPage> {
           ]),
         ),
         const SizedBox(height: 16),
+        Container(
+  padding: const EdgeInsets.all(16),
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(16),
+  ),
+  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+    const Row(children: [
+      Icon(Icons.map, color: C.azul, size: 22),
+      SizedBox(width: 8),
+      Text('Servos de Território',
+          style: TextStyle(fontWeight: FontWeight.bold,
+              color: C.azul, fontSize: 14)),
+    ]),
+    const SizedBox(height: 4),
+    const Text(
+      'Cadastre aqui quem tem permissão para liberar territórios.',
+      style: TextStyle(fontSize: 11, color: C.cinza),
+    ),
+    const SizedBox(height: 12),
+    if (AuthStore.instance.servos.isEmpty)
+      const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Text('Nenhum servo cadastrado.',
+            style: TextStyle(fontSize: 12, color: C.cinza,
+                fontStyle: FontStyle.italic)),
+      )
+    else
+      ...AuthStore.instance.servos.entries.map((e) =>
+          _LinhaServo(nome: e.key, senha: e.value)),
+    const SizedBox(height: 8),
+    ElevatedButton.icon(
+      onPressed: _adicionarServo,
+      icon: const Icon(Icons.add, size: 18),
+      label: const Text('Cadastrar servo de território'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: C.azul,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+      ),
+    ),
+  ]),
+),
+const SizedBox(height: 16),
       ],
       SizedBox(
         height: 48,
@@ -3080,4 +3124,127 @@ class _LinhaServico {
     this.local = '',
     this.dirigente = '',
   });
+}
+
+
+// ============== LINHA DE SERVO ==============
+class _LinhaServo extends StatefulWidget {
+  final String nome;
+  final String senha;
+  const _LinhaServo({required this.nome, required this.senha});
+  @override
+  State<_LinhaServo> createState() => _LinhaServoState();
+}
+
+class _LinhaServoState extends State<_LinhaServo> {
+  final TextEditingController _ctrl = TextEditingController();
+  bool _oculto = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl.text = widget.senha;
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: C.verde,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          alignment: Alignment.center,
+          child: const Icon(Icons.person, color: Colors.white, size: 22),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(widget.nome,
+                  style: const TextStyle(fontSize: 14,
+                      fontWeight: FontWeight.bold, color: C.azul)),
+              const SizedBox(height: 4),
+              TextField(
+                controller: _ctrl,
+                obscureText: _oculto,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(fontSize: 13, color: C.azul),
+                decoration: InputDecoration(
+                  isDense: true,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 10),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _oculto ? Icons.visibility_off : Icons.visibility,
+                      size: 18,
+                      color: C.cinza,
+                    ),
+                    onPressed: () => setState(() => _oculto = !_oculto),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 6),
+        IconButton(
+          icon: const Icon(Icons.check_circle, color: C.verde),
+          tooltip: 'Salvar senha',
+          onPressed: () {
+            final nova = _ctrl.text.trim();
+            if (nova.isEmpty) return;
+            AuthStore.instance.alterarSenhaServo(widget.nome, nova);
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Senha atualizada'),
+              backgroundColor: C.verde,
+              duration: Duration(seconds: 1),
+            ));
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+          tooltip: 'Remover servo',
+          onPressed: () async {
+            final ok = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Remover servo'),
+                content: Text('Remover "${widget.nome}"?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('Cancelar'),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: C.vermelho),
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text('Remover',
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
+            );
+            if (ok == true && context.mounted) {
+              AuthStore.instance.removerServo(widget.nome);
+            }
+          },
+        ),
+      ]),
+    );
+  }
 }
