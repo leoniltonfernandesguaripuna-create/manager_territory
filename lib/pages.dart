@@ -2667,6 +2667,66 @@ class _AdminPageState extends State<AdminPage> {
       ),
     );
   }
+  Future<void> _adicionarServo() async {
+  final nomeCtrl = TextEditingController();
+  final senhaCtrl = TextEditingController();
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Cadastrar servo de território'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: nomeCtrl,
+            autofocus: true,
+            textCapitalization: TextCapitalization.words,
+            decoration: const InputDecoration(labelText: 'Nome do servo'),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: senhaCtrl,
+            obscureText: true,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Senha'),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancelar'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: C.azul),
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Cadastrar', style: TextStyle(color: Colors.white)),
+        ),
+      ],
+    ),
+  );
+  if (ok == true && mounted) {
+    final nome = nomeCtrl.text.trim();
+    final senha = senhaCtrl.text.trim();
+    if (nome.isEmpty || senha.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Preencha nome e senha'),
+        backgroundColor: C.vermelho,
+      ));
+    } else {
+      final res = AuthStore.instance.adicionarServo(nome, senha);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(res
+            ? 'Servo "$nome" cadastrado'
+            : 'Já existe um servo com esse nome'),
+        backgroundColor: res ? C.verde : C.vermelho,
+      ));
+    }
+  }
+  nomeCtrl.dispose();
+  senhaCtrl.dispose();
+}
+
 
   Widget _login() {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
