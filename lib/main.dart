@@ -66,6 +66,12 @@ final dirTerr = await Cloud.ler('dirigentes_territorio');
 if (dirTerr != null) {
   DirigenteTerritorioStore.carregar(dirTerr);
 }
+final srv = await Cloud.ler('servos');           // ← novo
+if (srv != null && srv['lista'] != null) {       // ← novo
+  AuthStore.instance.carregarServos(             // ← novo
+    Map<String, String>.from(srv['lista'] as Map),  // ← novo
+  );                                              // ← novo
+}                                                 // ← novo
 final grp = await Cloud.ler('grupos');
 if (grp != null && grp['lista'] != null) {
   GruposStore.instance.carregar(List<Map<String, dynamic>>.from(
