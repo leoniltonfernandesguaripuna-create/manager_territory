@@ -73,6 +73,72 @@ class _ServoTerritorioPageState extends State<ServoTerritorioPage> {
   void _onChanged() {
     if (mounted) setState(() {});
   }
+  
+Future<void> _abrirHistorico(BuildContext context) async {
+  await showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Última data trabalhada'),
+      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 400,
+        child: AnimatedBuilder(
+          animation: DesignacaoStore.instance,
+          builder: (context, _) {
+            final territorios = TerritoriosStore.instance.lista;
+            return ListView.separated(
+              itemCount: territorios.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (_, i) {
+                final t = territorios[i];
+                final ultima = DesignacaoStore.instance
+                    .ultimaDataConclusao(t.numero);
+                final temData = ultima.isNotEmpty;
+                return ListTile(
+                  dense: true,
+                  leading: CircleAvatar(
+                    backgroundColor: C.bege,
+                    foregroundColor: C.azul,
+                    child: Text(
+                      t.numero.replaceAll('T-', ''),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  ),
+                  title: Text(
+                    t.numero,
+                    style: const TextStyle(
+                        fontSize: 13,
+                        color: C.azul,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(t.nome,
+                      style: const TextStyle(fontSize: 11)),
+                  trailing: Text(
+                    temData ? ultima : 'Nunca',
+                    style: TextStyle(
+                      color: temData ? C.verde : C.cinza,
+                      fontWeight:
+                          temData ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 12,
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Fechar'),
+        ),
+      ],
+    ),
+  );
+}
 
   Future<void> _novoGrupo() async {
     final nome = await _pedirNome(
@@ -105,7 +171,15 @@ class _ServoTerritorioPageState extends State<ServoTerritorioPage> {
             style: TextStyle(fontWeight: FontWeight.bold,
                 fontSize: 16, letterSpacing: 0.5)),
         centerTitle: true,
-        actions: const [BadgeUsuario(), BotaoSalvar()],
+        actions: [
+  IconButton(
+    tooltip: 'Últimas datas trabalhadas',
+    icon: const Icon(Icons.history),
+    onPressed: () => _abrirHistorico(context),
+  ),
+  const BadgeUsuario(),
+  const BotaoSalvar(),
+],
       ),
       body: SafeArea(
         child: grupos.isEmpty
