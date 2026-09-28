@@ -376,3 +376,345 @@ class DirigentesStore {
     nomes = dados;
   }
 }
+
+
+// ============== SERVIÇO DE CAMPO STORE ==============
+class ServicoCampoStore extends ChangeNotifier {
+  static final ServicoCampoStore instance = ServicoCampoStore._();
+  ServicoCampoStore._();
+  final Map<String, String> locais = {};
+  Timer? _debounce;
+
+  void setLocal(String dataKey, String valor) {
+    locais[dataKey] = valor;
+    notifyListeners();
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 800), _salvar);
+  }
+
+  void carregar(Map<String, dynamic> dados) {
+    locais.clear();
+    dados.forEach((k, v) => locais[k] = v.toString());
+    notifyListeners();
+  }
+
+  Future<void> _salvar() async {
+    await Cloud.salvar('servico_campo', {'locais': locais});
+  }
+}
+
+// ============== EVENTOS STORE ==============
+class EventosStore extends ChangeNotifier {
+  static final EventosStore instance = EventosStore._();
+  EventosStore._();
+  final Map<String, dynamic> _dados = {};
+  Timer? _debounceNome;
+
+  Map<String, dynamic> get dados => _dados;
+
+  Map<String, dynamic> get(int l, int g) =>
+      (_dados['${l}_$g'] as Map?)?.cast<String, dynamic>() ??
+      {'nome': '', 'dias': 0, 'pg': false};
+
+  void setNome(int l, int g, String nome) {
+    final k = '${l}_$g';
+    final d = Map<String, dynamic>.from(get(l, g));
+    d['nome'] = nome;
+    _dados[k] = d;
+    notifyListeners();
+    _debounceNome?.cancel();
+    _debounceNome = Timer(const Duration(milliseconds: 800), _salvar);
+  }
+
+  void toggleDia(int l, int g, int bit) {
+    final k = '${l}_$g';
+    final d = Map<String, dynamic>.from(get(l, g));
+    d['dias'] = (d['dias'] as int) ^ bit;
+    _dados[k] = d;
+    notifyListeners();
+    _salvar();
+  }
+
+  void togglePg(int l, int g) {
+    final k = '${l}_$g';
+    final d = Map<String, dynamic>.from(get(l, g));
+    d['pg'] = !(d['pg'] as bool);
+    _dados[k] = d;
+    notifyListeners();
+    _salvar();
+  }
+
+  void carregar(Map<String, dynamic> dados) {
+    _dados.clear();
+    dados.forEach((k, v) {
+      if (v is Map) {
+        _dados[k] = Map<String, dynamic>.from(v);
+      }
+    });
+    notifyListeners();
+  }
+
+  Future<void> _salvar() async {
+    await Cloud.salvar('eventos', {'dados': _dados});
+  }
+}
+
+// ============== MAPAS STORE ==============
+class MapasStore {
+  static final Map<String, String> _fotos = {};
+
+  static String? get(String territorio) => _fotos[territorio];
+
+  static void set(String territorio, String? base64) {
+    if (base64 == null || base64.isEmpty) {
+      _fotos.remove(territorio);
+    } else {
+      _fotos[territorio] = base64;
+    }
+    Cloud.salvar('mapas', {territorio: base64 ?? ''});
+  }
+
+  static void carregar(Map<String, dynamic> dados) {
+    _fotos.clear();
+    dados.forEach((k, v) {
+      if (v is String && v.isNotEmpty) _fotos[k] = v;
+    });
+  }
+}
+
+// ============== QUADRAS STORE ==============
+class QuadrasStore {
+  static final Map<String, List<List<int>>> _dados = {};
+
+  static List<List<int>> get(String territorio) =>
+      _dados[territorio] ??
+      List.generate(10, (_) => List.generate(14, (_) => 0));
+
+  static void set(String territorio, List<List<int>> estados) {
+    _dados[territorio] = estados;
+    _salvar(territorio);
+  }
+
+  static void carregar(Map<String, dynamic> dados) {
+    _dados.clear();
+    dados.forEach((terr, raw) {
+      List<List<int>> matriz;
+      if (raw is Map) {
+        matriz = List.generate(10, (l) {
+          final linhaRaw = raw['$l'];
+          if (linhaRaw is List) {
+            return List.generate(14, (c) {
+              if (c < linhaRaw.length) {
+                return int.tryParse(linhaRaw[c].toString()) ?? 0;
+              }
+              return 0;
+            });
+          }
+          return List.generate(14, (_) => 0);
+        });
+      } else if (raw is List) {
+        matriz = List.generate(10, (l) {
+          if (l < raw.length && raw[l] is List) {
+            final linha = raw[l] as List;
+            return List.generate(14, (c) {
+              if (c < linha.length) {
+                return int.tryParse(linha[c].toString()) ?? 0;
+              }
+              return 0;
+            });
+          }
+          return List.generate(14, (_) => 0);
+        });
+      } else {
+        return;
+      }
+      _dados[terr] = matriz;
+    });
+  }
+
+  static Future<void> _salvar(String territorio) async {
+    final matriz = _dados[territorio];
+    if (matriz == null) return;
+    final out = <String, dynamic>{};
+    for (int i = 0; i < matriz.length; i++) {
+      out['$i'] = matriz[i];
+    }
+    await Cloud.salvar('quadras', {territorio: out});
+  }
+}
+
+// ============== DIRIGENTE TERRITÓRIO STORE ==============
+class DirigenteTerritorioStore {
+  static final Map<String, Map<String, String>> _dados = {};
+
+  static String valor(String territorio, int linha, int coluna) {
+    final map = _dados[territorio];
+    if (map == null) return '';
+    return map['${linha}_$coluna'] ?? '';
+  }
+
+  static void set(String territorio, int linha, int coluna, String valor) {
+    _dados.putIfAbsent(territorio, () => {});
+    _dados[territorio]!['${linha}_$coluna'] = valor;
+    _salvar(territorio);
+  }
+
+  static void carregar(Map<String, dynamic> dados) {
+    _dados.clear();
+    dados.forEach((terr, map) {
+      if (map is Map) {
+        final m = <String, String>{};
+        map.forEach((k, v) => m[k] = v.toString());
+        _dados[terr] = m;
+      }
+    });
+  }
+
+  static Future<void> _salvar(String territorio) async {
+    await Cloud.salvar('dirigentes_territorio', {
+      territorio: _dados[territorio],
+    });
+  }
+}
+
+// ============== GRUPOS (SERVO DE TERRITÓRIO) ==============
+class Grupo {
+  String id;
+  String nome;
+  List<String> territorios;
+  String? ativo;
+
+  static const int maxTerritorios = 6;
+
+  Grupo({
+    required this.id,
+    required this.nome,
+    List<String>? territorios,
+    this.ativo,
+  }) : territorios = territorios ?? [];
+
+  bool get cheio => territorios.length >= maxTerritorios;
+  bool get vazio => territorios.isEmpty;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'nome': nome,
+        'territorios': territorios,
+        'ativo': ativo,
+      };
+
+  factory Grupo.fromJson(Map<String, dynamic> j) => Grupo(
+        id: j['id']?.toString() ?? '',
+        nome: j['nome']?.toString() ?? '',
+        territorios:
+            (j['territorios'] as List?)?.map((e) => e.toString()).toList() ?? [],
+        ativo: j['ativo']?.toString(),
+      );
+}
+
+class GruposStore extends ChangeNotifier {
+  static final GruposStore instance = GruposStore._();
+  GruposStore._();
+
+  final List<Grupo> lista = [];
+
+  Grupo? porId(String id) {
+    for (final g in lista) {
+      if (g.id == id) return g;
+    }
+    return null;
+  }
+
+  bool adicionar(String nome) {
+    final n = nome.trim();
+    if (n.isEmpty) return false;
+    if (lista.any((g) => g.nome.toLowerCase() == n.toLowerCase())) return false;
+    lista.add(Grupo(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      nome: n,
+    ));
+    notifyListeners();
+    _salvar();
+    return true;
+  }
+
+  void renomear(String id, String novoNome) {
+    final g = porId(id);
+    if (g == null) return;
+    final n = novoNome.trim();
+    if (n.isEmpty) return;
+    g.nome = n;
+    notifyListeners();
+    _salvar();
+  }
+
+  void excluir(String id) {
+    lista.removeWhere((g) => g.id == id);
+    _sincronizarLiberados();
+    notifyListeners();
+    _salvar();
+  }
+
+  String? adicionarTerritorio(String grupoId, String territorioNumero) {
+    final g = porId(grupoId);
+    if (g == null) return 'Grupo não encontrado.';
+    if (g.cheio) return 'Este grupo já tem ${Grupo.maxTerritorios} territórios.';
+    if (g.territorios.contains(territorioNumero)) {
+      return 'Este território já está no grupo.';
+    }
+    g.territorios.add(territorioNumero);
+    g.ativo ??= territorioNumero;
+    _sincronizarLiberados();
+    notifyListeners();
+    _salvar();
+    return null;
+  }
+
+  void removerTerritorio(String grupoId, String territorioNumero) {
+    final g = porId(grupoId);
+    if (g == null) return;
+    g.territorios.remove(territorioNumero);
+    if (g.ativo == territorioNumero) {
+      g.ativo = g.territorios.isEmpty ? null : g.territorios.first;
+    }
+    _sincronizarLiberados();
+    notifyListeners();
+    _salvar();
+  }
+
+  void definirAtivo(String grupoId, String territorioNumero) {
+    final g = porId(grupoId);
+    if (g == null) return;
+    if (!g.territorios.contains(territorioNumero)) return;
+    g.ativo = territorioNumero;
+    notifyListeners();
+    _salvar();
+  }
+
+  void carregar(List<Map<String, dynamic>> dados) {
+    lista.clear();
+    for (final d in dados) {
+      lista.add(Grupo.fromJson(d));
+    }
+    _sincronizarLiberados();
+    notifyListeners();
+  }
+
+  /// Atualiza o campo `liberado` de cada território:
+  /// fica liberado se está em PELO MENOS UM grupo.
+  void _sincronizarLiberados() {
+    final territorios = TerritoriosStore.instance.lista;
+    for (final t in territorios) {
+      final emAlgumGrupo =
+          lista.any((g) => g.territorios.contains(t.numero));
+      t.liberado = emAlgumGrupo;
+    }
+    TerritoriosStore.instance.notifyListeners();
+  }
+
+  Future<void> _salvar() async {
+    await Cloud.salvar('grupos', {
+      'lista': lista.map((g) => g.toJson()).toList(),
+    });
+  }
+}
