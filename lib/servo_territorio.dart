@@ -3,6 +3,7 @@ import 'tema.dart';
 import 'stores.dart';
 import 'widgets.dart';
 import 'pages.dart';
+
 // -----------------------------------------------------------------------------
 // Diálogo de texto reutilizável
 // -----------------------------------------------------------------------------
@@ -47,6 +48,155 @@ Future<String?> _pedirNome({
 }
 
 // =============================================================================
+// TELA DE LOGIN DO SERVO
+// =============================================================================
+class _TelaLoginServo extends StatefulWidget {
+  const _TelaLoginServo();
+  @override
+  State<_TelaLoginServo> createState() => _TelaLoginServoState();
+}
+
+class _TelaLoginServoState extends State<_TelaLoginServo> {
+  final _nomeCtrl = TextEditingController();
+  final _senhaCtrl = TextEditingController();
+  bool _oculto = true;
+
+  @override
+  void dispose() {
+    _nomeCtrl.dispose();
+    _senhaCtrl.dispose();
+    super.dispose();
+  }
+
+  void _entrar() {
+    final nome = _nomeCtrl.text.trim();
+    final senha = _senhaCtrl.text.trim();
+    if (nome.isEmpty || senha.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Preencha nome e senha'),
+        backgroundColor: C.vermelho,
+      ));
+      return;
+    }
+    final ok = AuthStore.instance.loginServo(nome, senha);
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Nome ou senha incorretos'),
+        backgroundColor: C.vermelho,
+      ));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: C.cinzaClaro,
+      appBar: AppBar(
+        backgroundColor: C.azul,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        title: const Text('SERVO DE TERRITÓRIO',
+            style: TextStyle(fontWeight: FontWeight.bold,
+                fontSize: 16, letterSpacing: 0.5)),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(children: [
+                const Icon(Icons.person_pin_circle, color: C.azul, size: 60),
+                const SizedBox(height: 12),
+                const Text('Acesso do Servo de Território',
+                    style: TextStyle(fontSize: 18,
+                        fontWeight: FontWeight.bold, color: C.azul)),
+                const SizedBox(height: 4),
+                const Text(
+                  'Somente servos cadastrados podem entrar aqui.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: C.cinza),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: _nomeCtrl,
+                  textCapitalization: TextCapitalization.words,
+                  style: const TextStyle(fontSize: 14, color: C.azul),
+                  decoration: const InputDecoration(
+                    labelText: 'Nome',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _senhaCtrl,
+                  obscureText: _oculto,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(fontSize: 14, color: C.azul),
+                  decoration: InputDecoration(
+                    labelText: 'Senha',
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _oculto ? Icons.visibility_off : Icons.visibility,
+                        size: 18,
+                        color: C.cinza,
+                      ),
+                      onPressed: () => setState(() => _oculto = !_oculto),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 48,
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _entrar,
+                    icon: const Icon(Icons.login),
+                    label: const Text('Entrar',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: C.azul,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ]),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: C.bege,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Row(children: [
+                Icon(Icons.info_outline, color: C.azul, size: 18),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'O servo é cadastrado pelo administrador na aba Administrador.',
+                    style: TextStyle(fontSize: 11, color: C.azul),
+                  ),
+                ),
+              ]),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
 // TELA PRINCIPAL — lista de grupos
 // =============================================================================
 class ServoTerritorioPage extends StatefulWidget {
@@ -61,84 +211,86 @@ class _ServoTerritorioPageState extends State<ServoTerritorioPage> {
     super.initState();
     GruposStore.instance.addListener(_onChanged);
     TerritoriosStore.instance.addListener(_onChanged);
+    AuthStore.instance.addListener(_onChanged);
   }
 
   @override
   void dispose() {
     GruposStore.instance.removeListener(_onChanged);
     TerritoriosStore.instance.removeListener(_onChanged);
+    AuthStore.instance.removeListener(_onChanged);
     super.dispose();
   }
 
   void _onChanged() {
     if (mounted) setState(() {});
   }
-  
-Future<void> _abrirHistorico(BuildContext context) async {
-  await showDialog(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Última data trabalhada'),
-      contentPadding: const EdgeInsets.symmetric(vertical: 12),
-      content: SizedBox(
-        width: double.maxFinite,
-        height: 400,
-        child: AnimatedBuilder(
-          animation: DesignacaoStore.instance,
-          builder: (context, _) {
-            final territorios = TerritoriosStore.instance.lista;
-            return ListView.separated(
-              itemCount: territorios.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
-              itemBuilder: (_, i) {
-                final t = territorios[i];
-                final ultima = DesignacaoStore.instance
-                    .ultimaDataConclusao(t.numero);
-                final temData = ultima.isNotEmpty;
-                return ListTile(
-                  dense: true,
-                  leading: CircleAvatar(
-                    backgroundColor: C.bege,
-                    foregroundColor: C.azul,
-                    child: Text(
-                      t.numero.replaceAll('T-', ''),
+
+  Future<void> _abrirHistorico(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Última data trabalhada'),
+        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 400,
+          child: AnimatedBuilder(
+            animation: DesignacaoStore.instance,
+            builder: (context, _) {
+              final territorios = TerritoriosStore.instance.lista;
+              return ListView.separated(
+                itemCount: territorios.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (_, i) {
+                  final t = territorios[i];
+                  final ultima = DesignacaoStore.instance
+                      .ultimaDataConclusao(t.numero);
+                  final temData = ultima.isNotEmpty;
+                  return ListTile(
+                    dense: true,
+                    leading: CircleAvatar(
+                      backgroundColor: C.bege,
+                      foregroundColor: C.azul,
+                      child: Text(
+                        t.numero.replaceAll('T-', ''),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
+                    ),
+                    title: Text(
+                      t.numero,
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 12),
+                          fontSize: 13,
+                          color: C.azul,
+                          fontWeight: FontWeight.w600),
                     ),
-                  ),
-                  title: Text(
-                    t.numero,
-                    style: const TextStyle(
-                        fontSize: 13,
-                        color: C.azul,
-                        fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: Text(t.nome,
-                      style: const TextStyle(fontSize: 11)),
-                  trailing: Text(
-                    temData ? ultima : 'Nunca',
-                    style: TextStyle(
-                      color: temData ? C.verde : C.cinza,
-                      fontWeight:
-                          temData ? FontWeight.bold : FontWeight.normal,
-                      fontSize: 12,
+                    subtitle: Text(t.nome,
+                        style: const TextStyle(fontSize: 11)),
+                    trailing: Text(
+                      temData ? ultima : 'Nunca',
+                      style: TextStyle(
+                        color: temData ? C.verde : C.cinza,
+                        fontWeight:
+                            temData ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
-                );
-              },
-            );
-          },
+                  );
+                },
+              );
+            },
+          ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Fechar'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Fechar'),
-        ),
-      ],
-    ),
-  );
-}
+    );
+  }
 
   Future<void> _novoGrupo() async {
     final nome = await _pedirNome(
@@ -160,6 +312,11 @@ Future<void> _abrirHistorico(BuildContext context) async {
 
   @override
   Widget build(BuildContext context) {
+    // 🎯 Verificação de login: se não tem permissão, mostra tela de login
+    if (!AuthStore.instance.podeAcessarServoTerritorio) {
+      return const _TelaLoginServo();
+    }
+
     final grupos = GruposStore.instance.lista;
     return Scaffold(
       backgroundColor: C.cinzaClaro,
@@ -172,14 +329,22 @@ Future<void> _abrirHistorico(BuildContext context) async {
                 fontSize: 16, letterSpacing: 0.5)),
         centerTitle: true,
         actions: [
-  IconButton(
-    tooltip: 'Últimas datas trabalhadas',
-    icon: const Icon(Icons.history),
-    onPressed: () => _abrirHistorico(context),
-  ),
-  const BadgeUsuario(),
-  const BotaoSalvar(),
-],
+          IconButton(
+            tooltip: 'Últimas datas trabalhadas',
+            icon: const Icon(Icons.history),
+            onPressed: () => _abrirHistorico(context),
+          ),
+          if (AuthStore.instance.isServo)
+            IconButton(
+              tooltip: 'Sair',
+              icon: const Icon(Icons.logout),
+              onPressed: () {
+                AuthStore.instance.logoutServo();
+              },
+            ),
+          const BadgeUsuario(),
+          const BotaoSalvar(),
+        ],
       ),
       body: SafeArea(
         child: grupos.isEmpty
@@ -273,7 +438,6 @@ Future<void> _abrirHistorico(BuildContext context) async {
                 ],
               ),
             ),
-            // Botão "+ território" direto no card
             if (!g.cheio)
               IconButton(
                 tooltip: 'Adicionar território',
@@ -564,102 +728,100 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
   }
 
   Widget _linhaTerritorio(Grupo grupo, String numero) {
-  final terr = TerritoriosStore.instance.lista.firstWhere(
-    (t) => t.numero == numero,
-    orElse: () => Territorio(numero: numero, nome: '(removido)'),
-  );
-  final ativo = grupo.ativo == numero;
+    final terr = TerritoriosStore.instance.lista.firstWhere(
+      (t) => t.numero == numero,
+      orElse: () => Territorio(numero: numero, nome: '(removido)'),
+    );
+    final ativo = grupo.ativo == numero;
 
-  return Material(
-    color: ativo ? const Color(0xFFE6F4EA) : Colors.white,
-    borderRadius: BorderRadius.circular(12),
-    elevation: 1,
-    child: InkWell(
+    return Material(
+      color: ativo ? const Color(0xFFE6F4EA) : Colors.white,
       borderRadius: BorderRadius.circular(12),
-      // Toque no card abre o território
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => DetalheTerritorioPage(
-            numero: terr.numero,
-            nome: terr.nome,
+      elevation: 1,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DetalheTerritorioPage(
+              numero: terr.numero,
+              nome: terr.nome,
+            ),
           ),
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
-        child: Row(children: [
-          // Rádio: marca/desmarca como ativo (só 1 por grupo)
-          Radio<bool>(
-            value: true,
-            groupValue: ativo,
-            activeColor: C.verde,
-            onChanged: (_) {
-              if (!ativo) {
-                GruposStore.instance.definirAtivo(grupo.id, numero);
-              }
-            },
-          ),
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: ativo ? C.verde : C.bege,
-              borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
+          child: Row(children: [
+            Radio<bool>(
+              value: true,
+              groupValue: ativo,
+              activeColor: C.verde,
+              onChanged: (_) {
+                if (!ativo) {
+                  GruposStore.instance.definirAtivo(grupo.id, numero);
+                }
+              },
             ),
-            alignment: Alignment.center,
-            child: Text(
-              numero.replaceAll('T-', ''),
-              style: TextStyle(
-                color: ativo ? Colors.white : C.azul,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: ativo ? C.verde : C.bege,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                numero.replaceAll('T-', ''),
+                style: TextStyle(
+                  color: ativo ? Colors.white : C.azul,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$numero ${terr.nome}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: C.azul,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    ativo
-                        ? 'Em andamento • toque para abrir'
-                        : 'Toque para abrir o território',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: ativo ? C.verde : C.cinza,
-                      fontWeight:
-                          ativo ? FontWeight.bold : FontWeight.normal,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$numero ${terr.nome}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: C.azul,
                     ),
                   ),
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      ativo
+                          ? 'Em andamento • toque para abrir'
+                          : 'Toque para abrir o território',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: ativo ? C.verde : C.cinza,
+                        fontWeight:
+                            ativo ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.remove_circle_outline,
-              color: Colors.redAccent,
+            IconButton(
+              icon: const Icon(
+                Icons.remove_circle_outline,
+                color: Colors.redAccent,
+              ),
+              tooltip: 'Remover do grupo',
+              onPressed: () => _confirmarRemover(grupo, numero),
             ),
-            tooltip: 'Remover do grupo',
-            onPressed: () => _confirmarRemover(grupo, numero),
-          ),
-        ]),
+          ]),
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Future<void> _renomear(Grupo g) async {
     final nome = await _pedirNome(
