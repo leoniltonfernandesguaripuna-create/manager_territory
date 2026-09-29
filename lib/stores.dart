@@ -559,6 +559,47 @@ class DirigenteTerritorioStore {
     _salvar(territorio);
   }
 
+  /// Retorna a maior data encontrada nas colunas de DATA da grade
+  /// (colunas 2, 5, 8, 9, 10), percorrendo as linhas 1 a 10.
+  /// Essa é a "última data trabalhada" do território.
+  static String ultimaDataTrabalhada(String territorio) {
+    final map = _dados[territorio];
+    if (map == null) return '';
+    const colunasData = [2, 5, 8, 9, 10];
+    DateTime? maisRecente;
+    String textoMaisRecente = '';
+    for (int linha = 1; linha <= 10; linha++) {
+      for (final col in colunasData) {
+        final txt = map['${linha}_$col'] ?? '';
+        if (txt.trim().isEmpty) continue;
+        final dt = _parseDataLocal(txt);
+        if (dt == null) continue;
+        if (maisRecente == null || dt.isAfter(maisRecente)) {
+          maisRecente = dt;
+          textoMaisRecente = txt;
+        }
+      }
+    }
+    return textoMaisRecente;
+  }
+
+  static DateTime? _parseDataLocal(String txt) {
+    final n = txt.replaceAll('-', '/').replaceAll('.', '/').trim();
+    final p = n.split('/');
+    if (p.length < 2) return null;
+    final dia = int.tryParse(p[0]);
+    final mes = int.tryParse(p[1]);
+    final ano = p.length >= 3 ? int.tryParse(p[2]) : DateTime.now().year;
+    if (dia == null || mes == null || ano == null) return null;
+    if (dia < 1 || dia > 31 || mes < 1 || mes > 12) return null;
+    try {
+      final anoOk = ano < 100 ? 2000 + ano : ano;
+      return DateTime(anoOk, mes, dia);
+    } catch (_) {
+      return null;
+    }
+  }
+
   static void carregar(Map<String, dynamic> dados) {
     _dados.clear();
     dados.forEach((terr, map) {
