@@ -504,6 +504,8 @@ class _TerritoriosPageState extends State<TerritoriosPage> {
     );
   }
 }
+
+
 // ============== DETALHE TERRITÓRIO ==============
 class DetalheTerritorioPage extends StatefulWidget {
   final String numero;
@@ -1541,7 +1543,8 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
               fontWeight: vazio ? FontWeight.normal : FontWeight.w600)),
     );
   }
-}
+} 
+
 // ============== DIRIGENTE ==============
 class DirigentePage extends StatefulWidget {
   const DirigentePage({super.key});
@@ -2667,66 +2670,66 @@ class _AdminPageState extends State<AdminPage> {
       ),
     );
   }
+
   Future<void> _adicionarServo() async {
-  final nomeCtrl = TextEditingController();
-  final senhaCtrl = TextEditingController();
-  final ok = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Cadastrar servo de território'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: nomeCtrl,
-            autofocus: true,
-            textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(labelText: 'Nome do servo'),
+    final nomeCtrl = TextEditingController();
+    final senhaCtrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cadastrar servo de território'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nomeCtrl,
+              autofocus: true,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(labelText: 'Nome do servo'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: senhaCtrl,
+              obscureText: true,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Senha'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: senhaCtrl,
-            obscureText: true,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Senha'),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: C.azul),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Cadastrar', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancelar'),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: C.azul),
-          onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Cadastrar', style: TextStyle(color: Colors.white)),
-        ),
-      ],
-    ),
-  );
-  if (ok == true && mounted) {
-    final nome = nomeCtrl.text.trim();
-    final senha = senhaCtrl.text.trim();
-    if (nome.isEmpty || senha.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Preencha nome e senha'),
-        backgroundColor: C.vermelho,
-      ));
-    } else {
-      final res = AuthStore.instance.adicionarServo(nome, senha);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(res
-            ? 'Servo "$nome" cadastrado'
-            : 'Já existe um servo com esse nome'),
-        backgroundColor: res ? C.verde : C.vermelho,
-      ));
+    );
+    if (ok == true && mounted) {
+      final nome = nomeCtrl.text.trim();
+      final senha = senhaCtrl.text.trim();
+      if (nome.isEmpty || senha.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Preencha nome e senha'),
+          backgroundColor: C.vermelho,
+        ));
+      } else {
+        final res = AuthStore.instance.adicionarServo(nome, senha);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(res
+              ? 'Servo "$nome" cadastrado'
+              : 'Já existe um servo com esse nome'),
+          backgroundColor: res ? C.verde : C.vermelho,
+        ));
+      }
     }
+    nomeCtrl.dispose();
+    senhaCtrl.dispose();
   }
-  nomeCtrl.dispose();
-  senhaCtrl.dispose();
-}
-
 
   Widget _login() {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -2821,51 +2824,51 @@ class _AdminPageState extends State<AdminPage> {
           ]),
         ),
         const SizedBox(height: 16),
-        Container(
-  padding: const EdgeInsets.all(16),
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(16),
-  ),
-  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-    const Row(children: [
-      Icon(Icons.map, color: C.azul, size: 22),
-      SizedBox(width: 8),
-      Text('Servos de Território',
-          style: TextStyle(fontWeight: FontWeight.bold,
-              color: C.azul, fontSize: 14)),
-    ]),
-    const SizedBox(height: 4),
-    const Text(
-      'Cadastre aqui quem tem permissão para liberar territórios.',
-      style: TextStyle(fontSize: 11, color: C.cinza),
-    ),
-    const SizedBox(height: 12),
-    if (AuthStore.instance.servos.isEmpty)
-      const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Text('Nenhum servo cadastrado.',
-            style: TextStyle(fontSize: 12, color: C.cinza,
-                fontStyle: FontStyle.italic)),
-      )
-    else
-      ...AuthStore.instance.servos.entries.map((e) =>
-          _LinhaServo(nome: e.key, senha: e.value)),
-    const SizedBox(height: 8),
-    ElevatedButton.icon(
-      onPressed: _adicionarServo,
-      icon: const Icon(Icons.add, size: 18),
-      label: const Text('Cadastrar servo de território'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: C.azul,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-      ),
-    ),
-  ]),
-),
-const SizedBox(height: 16),
       ],
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          const Row(children: [
+            Icon(Icons.map, color: C.azul, size: 22),
+            SizedBox(width: 8),
+            Text('Servos de Território',
+                style: TextStyle(fontWeight: FontWeight.bold,
+                    color: C.azul, fontSize: 14)),
+          ]),
+          const SizedBox(height: 4),
+          const Text(
+            'Cadastre aqui quem tem permissão para liberar territórios.',
+            style: TextStyle(fontSize: 11, color: C.cinza),
+          ),
+          const SizedBox(height: 12),
+          if (AuthStore.instance.servos.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text('Nenhum servo cadastrado.',
+                  style: TextStyle(fontSize: 12, color: C.cinza,
+                      fontStyle: FontStyle.italic)),
+            )
+          else
+            ...AuthStore.instance.servos.entries.map((e) =>
+                _LinhaServo(nome: e.key, senha: e.value)),
+          const SizedBox(height: 8),
+          ElevatedButton.icon(
+            onPressed: _adicionarServo,
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Cadastrar servo de território'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: C.azul,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ]),
+      ),
+      const SizedBox(height: 16),
       SizedBox(
         height: 48,
         child: ElevatedButton.icon(
@@ -3108,25 +3111,6 @@ class _ItemPermissao extends StatelessWidget {
   }
 }
 
-// ============== MODELO AUXILIAR ==============
-class _LinhaServico {
-  final String dataKey;
-  final String mes;
-  final String semana;
-  final String horario;
-  String local;
-  String dirigente;
-  _LinhaServico({
-    required this.dataKey,
-    required this.mes,
-    required this.semana,
-    required this.horario,
-    this.local = '',
-    this.dirigente = '',
-  });
-}
-
-
 // ============== LINHA DE SERVO ==============
 class _LinhaServo extends StatefulWidget {
   final String nome;
@@ -3247,4 +3231,22 @@ class _LinhaServoState extends State<_LinhaServo> {
       ]),
     );
   }
+}
+
+// ============== MODELO AUXILIAR ==============
+class _LinhaServico {
+  final String dataKey;
+  final String mes;
+  final String semana;
+  final String horario;
+  String local;
+  String dirigente;
+  _LinhaServico({
+    required this.dataKey,
+    required this.mes,
+    required this.semana,
+    required this.horario,
+    this.local = '',
+    this.dirigente = '',
+  });
 }
