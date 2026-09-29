@@ -199,26 +199,19 @@ class TerritoriosStore extends ChangeNotifier {
     _salvar();
   }
 
-  /// 🔓 Alterna manualmente o estado "liberado" do território.
-  /// Chamado quando o servo toca no botão de cadeado.
-  void alternarLiberado(String numero) {
+  /// 🔓 Libera APENAS este território. Bloqueia todos os outros.
+  void liberar(String numero) {
     for (final t in lista) {
-      if (t.numero == numero) {
-        t.liberado = !t.liberado;
-        break;
-      }
+      t.liberado = (t.numero == numero);
     }
     notifyListeners();
     _salvar();
   }
 
-  /// 🔒 Define manualmente o estado "liberado".
-  void definirLiberado(String numero, bool liberado) {
+  /// 🔒 Bloqueia todos os territórios.
+  void bloquearTodos() {
     for (final t in lista) {
-      if (t.numero == numero) {
-        t.liberado = liberado;
-        break;
-      }
+      t.liberado = false;
     }
     notifyListeners();
     _salvar();
@@ -231,10 +224,6 @@ class TerritoriosStore extends ChangeNotifier {
       lista.add(Territorio.fromJson(d));
     }
     notifyListeners();
-  }
-
-  void salvarNaNuvem() {
-    _salvar();
   }
 
   Future<void> _salvar() async {
@@ -405,7 +394,6 @@ class DirigentesStore {
     nomes = dados;
   }
 }
-
 
 // ============== SERVIÇO DE CAMPO STORE ==============
 class ServicoCampoStore extends ChangeNotifier {
@@ -771,3 +759,4 @@ class GruposStore extends ChangeNotifier {
     });
   }
 }
+
