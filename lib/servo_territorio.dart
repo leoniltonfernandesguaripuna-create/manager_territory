@@ -47,6 +47,43 @@ Future<String?> _pedirNome({
   return res;
 }
 
+// -----------------------------------------------------------------------------
+// Helpers de cor para a data (faixas de tempo)
+// -----------------------------------------------------------------------------
+
+/// Retorna a cor conforme o tempo desde a data:
+/// - até 45 dias  → verde
+/// - até 90 dias  → laranja
+/// - acima de 90  → vermelho
+/// - vazio        → cinza
+Color _corUltimaData(String texto) {
+  if (texto.trim().isEmpty) return C.cinza;
+  final dt = _parseDataFlexivel(texto);
+  if (dt == null) return C.azul;
+  final dias = DateTime.now().difference(dt).inDays;
+  if (dias <= 45) return C.verde;
+  if (dias <= 90) return Colors.orange;
+  return Colors.red;
+}
+
+/// Interpreta datas em formatos comuns: dd/mm/aaaa, dd/mm/aa, dd-mm-aaaa, etc.
+DateTime? _parseDataFlexivel(String txt) {
+  final n = txt.replaceAll('-', '/').replaceAll('.', '/').trim();
+  final p = n.split('/');
+  if (p.length < 2) return null;
+  final dia = int.tryParse(p[0]);
+  final mes = int.tryParse(p[1]);
+  final ano = p.length >= 3 ? int.tryParse(p[2]) : DateTime.now().year;
+  if (dia == null || mes == null || ano == null) return null;
+  if (dia < 1 || dia > 31 || mes < 1 || mes > 12) return null;
+  try {
+    final anoOk = ano < 100 ? 2000 + ano : ano;
+    return DateTime(anoOk, mes, dia);
+  } catch (_) {
+    return null;
+  }
+}
+
 // =============================================================================
 // TELA DE LOGIN DO SERVO
 // =============================================================================
@@ -270,7 +307,7 @@ class _ServoTerritorioPageState extends State<ServoTerritorioPage> {
                     trailing: Text(
                       temData ? ultima : 'Nunca',
                       style: TextStyle(
-                        color: temData ? C.verde : C.cinza,
+                        color: temData ? _corUltimaData(ultima) : C.cinza,
                         fontWeight:
                             temData ? FontWeight.bold : FontWeight.normal,
                         fontSize: 12,
@@ -312,7 +349,7 @@ class _ServoTerritorioPageState extends State<ServoTerritorioPage> {
 
   @override
   Widget build(BuildContext context) {
-    // 🎯 Verificação de login: se não tem permissão, mostra tela de login
+    // Verificação de login: se não tem permissão, mostra tela de login
     if (!AuthStore.instance.podeAcessarServoTerritorio) {
       return const _TelaLoginServo();
     }
@@ -589,6 +626,9 @@ class _SeletorTerritorioSheetState extends State<_SeletorTerritorioSheet> {
                       itemCount: _filtrados.length,
                       itemBuilder: (_, i) {
                         final t = _filtrados[i];
+                        final ultima = DesignacaoStore.instance
+                            .ultimaDataConclusao(t.numero);
+                        final temData = ultima.isNotEmpty;
                         return ListTile(
                           leading: CircleAvatar(
                             backgroundColor: C.bege,
@@ -601,7 +641,20 @@ class _SeletorTerritorioSheetState extends State<_SeletorTerritorioSheet> {
                           title: Text(t.nome,
                               style: const TextStyle(color: C.azul,
                                   fontWeight: FontWeight.w600)),
-                          subtitle: Text(t.numero),
+                          subtitle: Row(children: [
+                            Text(t.numero),
+                            if (temData) ...[
+                              const SizedBox(width: 8),
+                              Icon(Icons.circle,
+                                  size: 8, color: _corUltimaData(ultima)),
+                              const SizedBox(width: 4),
+                              Text(ultima,
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: _corUltimaData(ultima),
+                                      fontWeight: FontWeight.w600)),
+                            ],
+                          ]),
                           onTap: () => widget.onEscolher(t.numero),
                         );
                       },
@@ -630,12 +683,14 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
     super.initState();
     GruposStore.instance.addListener(_onChanged);
     TerritoriosStore.instance.addListener(_onChanged);
+    DesignacaoStore.instance.addListener(_onChanged);
   }
 
   @override
   void dispose() {
     GruposStore.instance.removeListener(_onChanged);
     TerritoriosStore.instance.removeListener(_onChanged);
+    DesignacaoStore.instance.removeListener(_onChanged);
     super.dispose();
   }
 
@@ -733,6 +788,8 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
       orElse: () => Territorio(numero: numero, nome: '(removido)'),
     );
     final ativo = grupo.ativo == numero;
+    final ultima = DesignacaoStore.instance.ultimaDataConclusao(numero);
+    final temData = ultima.isNotEmpty;
 
     return Material(
       color: ativo ? const Color(0xFFE6F4EA) : Colors.white,
@@ -794,17 +851,33 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      ativo
-                          ? 'Em andamento • toque para abrir'
-                          : 'Toque para abrir o território',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: ativo ? C.verde : C.cinza,
-                        fontWeight:
-                            ativo ? FontWeight.bold : FontWeight.normal,
+                    child: Row(children: [
+                      if (temData) ...[
+                        Icon(Icons.circle,
+                            size: 8, color: _corUltimaData(ultima)),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Último: $ultima',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: _corUltimaData(ultima),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Text(
+                        ativo
+                            ? 'Em andamento'
+                            : 'Toque para abrir',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: ativo ? C.verde : C.cinza,
+                          fontWeight:
+                              ativo ? FontWeight.bold : FontWeight.normal,
+                        ),
                       ),
-                    ),
+                    ]),
                   ),
                 ],
               ),
