@@ -658,6 +658,7 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
     GruposStore.instance.addListener(_onChanged);
     TerritoriosStore.instance.addListener(_onChanged);
     DesignacaoStore.instance.addListener(_onChanged);
+    AuthStore.instance.addListener(_onChanged);
   }
 
   @override
@@ -665,6 +666,7 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
     GruposStore.instance.removeListener(_onChanged);
     TerritoriosStore.instance.removeListener(_onChanged);
     DesignacaoStore.instance.removeListener(_onChanged);
+    AuthStore.instance.removeListener(_onChanged);
     super.dispose();
   }
 
@@ -673,8 +675,19 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
   }
 
   /// 🔓 Libera este território e bloqueia todos os outros.
-  /// Se já estava liberado, apenas bloqueia (toggle).
+  /// ⚠️ Só o servo de território pode fazer isso.
   void _toggleLiberado(String numero) {
+    if (!AuthStore.instance.isServo) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text(
+          'Só o servo de território pode liberar/bloquear territórios.',
+        ),
+        backgroundColor: C.vermelho,
+        duration: Duration(seconds: 2),
+      ));
+      return;
+    }
+
     final t = TerritoriosStore.instance.lista
         .firstWhere((x) => x.numero == numero,
             orElse: () => Territorio(numero: numero, nome: ''));
@@ -765,6 +778,7 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
   }
 
   Widget _aviso() {
+    final isServo = AuthStore.instance.isServo;
     final t = TerritoriosStore.instance.lista
         .where((x) => x.liberado)
         .toList();
@@ -777,13 +791,15 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: C.amarelo),
         ),
-        child: const Row(children: [
-          Icon(Icons.lock_outline, color: C.amarelo, size: 18),
-          SizedBox(width: 8),
+        child: Row(children: [
+          const Icon(Icons.lock_outline, color: C.amarelo, size: 18),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Nenhum território liberado. Toque no cadeado 🔒 pra liberar.',
-              style: TextStyle(fontSize: 11, color: C.azul,
+              isServo
+                  ? 'Nenhum território liberado. Toque no cadeado 🔒 pra liberar.'
+                  : 'Nenhum território liberado. Aguarde o servo liberar.',
+              style: const TextStyle(fontSize: 11, color: C.azul,
                   fontWeight: FontWeight.w600),
             ),
           ),
@@ -840,6 +856,7 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
       orElse: () => Territorio(numero: numero, nome: '(removido)'),
     );
     final liberado = terr.liberado;
+    final isServo = AuthStore.instance.isServo;
     final ultima = DirigenteTerritorioStore.ultimaDataTrabalhada(numero);
     final temData = ultima.isNotEmpty;
 
@@ -854,7 +871,7 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
           if (!liberado) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text(
-                'Território bloqueado. Libere ele no cadeado 🔒 primeiro.',
+                'Território bloqueado. Aguarde o servo liberar.',
               ),
               backgroundColor: C.vermelho,
               duration: Duration(seconds: 2),
@@ -935,11 +952,16 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
                 ],
               ),
             ),
+            // 🎯 Botão de cadeado — só funciona pra servo
             IconButton(
-              tooltip: liberado ? 'Bloquear' : 'Liberar pra trabalhar',
+              tooltip: isServo
+                  ? (liberado ? 'Bloquear' : 'Liberar pra trabalhar')
+                  : 'Só o servo pode liberar',
               icon: Icon(
                 liberado ? Icons.lock_open : Icons.lock_outline,
-                color: liberado ? C.verde : C.cinza,
+                color: isServo
+                    ? (liberado ? C.verde : C.cinza)
+                    : C.cinza.withValues(alpha: 0.5),
                 size: 30,
               ),
               onPressed: () => _toggleLiberado(numero),
