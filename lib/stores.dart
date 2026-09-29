@@ -704,6 +704,7 @@ class GruposStore extends ChangeNotifier {
       return 'Este território já está no grupo.';
     }
     g.territorios.add(territorioNumero);
+    // Primeiro território vira ativo automaticamente
     g.ativo ??= territorioNumero;
     _sincronizarLiberados();
     notifyListeners();
@@ -728,6 +729,7 @@ class GruposStore extends ChangeNotifier {
     if (g == null) return;
     if (!g.territorios.contains(territorioNumero)) return;
     g.ativo = territorioNumero;
+    _sincronizarLiberados();
     notifyListeners();
     _salvar();
   }
@@ -741,14 +743,14 @@ class GruposStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Atualiza o campo `liberado` de cada território:
-  /// fica liberado se está em PELO MENOS UM grupo.
+  /// Atualiza o campo `liberado` de cada território.
+  /// Só fica liberado o território marcado como **ativo** em algum grupo
+  /// (aquele que o servo está trabalhando no momento).
   void _sincronizarLiberados() {
     final territorios = TerritoriosStore.instance.lista;
     for (final t in territorios) {
-      final emAlgumGrupo =
-          lista.any((g) => g.territorios.contains(t.numero));
-      t.liberado = emAlgumGrupo;
+      final ativoEmAlgumGrupo = lista.any((g) => g.ativo == t.numero);
+      t.liberado = ativoEmAlgumGrupo;
     }
     TerritoriosStore.instance.notifyListeners();
   }
