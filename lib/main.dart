@@ -3,7 +3,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'cloud.dart';
-import 'tema.dart';     
+import 'tema.dart';
 import 'stores.dart';
 import 'widgets.dart';
 import 'pages.dart';
@@ -61,24 +61,24 @@ Future<void> _carregarDados() async {
     if (quadras != null) {
       QuadrasStore.carregar(quadras);
     }
-    
-final dirTerr = await Cloud.ler('dirigentes_territorio');
-if (dirTerr != null) {
-  DirigenteTerritorioStore.carregar(dirTerr);
-}
-final srv = await Cloud.ler('servos');           // ← NOVO
-if (srv != null && srv['lista'] != null) {       // ← NOVO
-  AuthStore.instance.carregarServos(             // ← NOVO
-    Map<String, String>.from(srv['lista'] as Map),  // ← NOVO
-  );                                              // ← NOVO
-}                                                 // ← NOVO
-final grp = await Cloud.ler('grupos');
-if (grp != null && grp['lista'] != null) {
-  GruposStore.instance.carregar(List<Map<String, dynamic>>.from(
-    (grp['lista'] as List).map((e) => Map<String, dynamic>.from(e)),
-  ));
-}
-    
+    final dirTerr = await Cloud.ler('dirigentes_territorio');
+    if (dirTerr != null) {
+      DirigenteTerritorioStore.carregar(dirTerr);
+    }
+    final srv = await Cloud.ler('servos');
+    if (srv != null && srv['lista'] != null) {
+      AuthStore.instance.carregarServos(
+        Map<String, String>.from(srv['lista'] as Map),
+      );
+    }
+    final grp = await Cloud.ler('grupos');
+    if (grp != null && grp['lista'] != null) {
+      GruposStore.instance.carregar(List<Map<String, dynamic>>.from(
+        (grp['lista'] as List).map((e) => Map<String, dynamic>.from(e)),
+      ));
+    }
+    // 🔒 Força a liberação correta (só o ativo de cada grupo)
+    GruposStore.instance.sincronizarAgora();
   } catch (_) {}
 }
 
@@ -96,4 +96,4 @@ class TerritorioApp extends StatelessWidget {
       home: const HomePage(),
     );
   }
-}                    
+}
