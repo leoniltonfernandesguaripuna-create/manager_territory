@@ -410,7 +410,18 @@ class _TerritoriosPageState extends State<TerritoriosPage> {
         title: const Text('TERRITÓRIOS DA CONGREGAÇÃO',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 0.5)),
         centerTitle: true,
-        actions: const [BadgeUsuario(), BotaoSalvar()],
+        actions: [
+          IconButton(
+            tooltip: 'Grupos',
+            icon: const Icon(Icons.groups),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ServoTerritorioPage()),
+            ),
+          ),
+          const BadgeUsuario(),
+          const BotaoSalvar(),
+        ],
       ),
       body: SafeArea(
         child: ListView.separated(
@@ -504,7 +515,6 @@ class _TerritoriosPageState extends State<TerritoriosPage> {
     );
   }
 }
-
 
 // ============== DETALHE TERRITÓRIO ==============
 class DetalheTerritorioPage extends StatefulWidget {
@@ -1543,7 +1553,7 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
               fontWeight: vazio ? FontWeight.normal : FontWeight.w600)),
     );
   }
-} 
+}
 
 // ============== DIRIGENTE ==============
 class DirigentePage extends StatefulWidget {
@@ -3250,3 +3260,4 @@ class _LinhaServico {
     this.dirigente = '',
   });
 }
+
