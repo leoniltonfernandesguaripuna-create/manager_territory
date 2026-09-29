@@ -357,19 +357,130 @@ class _TerritoriosPageState extends State<TerritoriosPage> {
   void initState() {
     super.initState();
     TerritoriosStore.instance.addListener(_onChanged);
+    GruposStore.instance.addListener(_onChanged);
     AuthStore.instance.addListener(_onChanged);
   }
+
   @override
   void dispose() {
     TerritoriosStore.instance.removeListener(_onChanged);
+    GruposStore.instance.removeListener(_onChanged);
     AuthStore.instance.removeListener(_onChanged);
     super.dispose();
   }
+
   void _onChanged() {
     if (mounted) setState(() {});
   }
-  void _editarNome(int index) {
-    final t = TerritoriosStore.instance.lista[index];
+
+  Future<void> _novoGrupo() async {
+    final ctrl = TextEditingController(
+      text: 'Grupo ${GruposStore.instance.lista.length + 1}',
+    );
+    final nome = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Novo grupo'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Nome do grupo',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: C.azul),
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Criar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    if (nome == null || nome.isEmpty || !mounted) return;
+    final ok = GruposStore.instance.adicionar(nome);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Já existe um grupo com esse nome.'),
+        backgroundColor: C.vermelho,
+      ));
+    }
+  }
+
+  Future<void> _designarParaGrupo(Territorio t) async {
+    final grupos = GruposStore.instance.lista;
+    if (grupos.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Crie um grupo primeiro.'),
+        backgroundColor: C.vermelho,
+      ));
+      return;
+    }
+
+    final escolhido = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Designar ${t.numero} para qual grupo?',
+                style: const TextStyle(fontSize: 16,
+                    fontWeight: FontWeight.bold, color: C.azul),
+              ),
+            ),
+            ...grupos.map((g) {
+              final cheio = g.cheio;
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: cheio ? Colors.grey.shade300 : C.bege,
+                  foregroundColor: cheio ? Colors.grey : C.azul,
+                  child: const Icon(Icons.groups, size: 18),
+                ),
+                title: Text(g.nome),
+                subtitle: Text(
+                    '${g.territorios.length}/${Grupo.maxTerritorios}'
+                    '${cheio ? " — cheio" : ""}'),
+                enabled: !cheio,
+                onTap: cheio ? null : () => Navigator.pop(ctx, g.id),
+              );
+            }),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+
+    if (escolhido == null || !mounted) return;
+    final erro = GruposStore.instance.adicionarTerritorio(escolhido, t.numero);
+    if (erro != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(erro), backgroundColor: C.vermelho,
+      ));
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('${t.numero} designado com sucesso!'),
+        backgroundColor: C.verde,
+        duration: const Duration(seconds: 1),
+      ));
+    }
+  }
+
+  void _editarNome(Territorio t) {
+    final index = TerritoriosStore.instance.lista.indexWhere((x) => x.numero == t.numero);
+    if (index < 0) return;
     final ctrl = TextEditingController(text: t.nome);
     showDialog(
       context: context,
@@ -384,12 +495,17 @@ class _TerritoriosPageState extends State<TerritoriosPage> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: C.azul),
             onPressed: () {
               final novo = ctrl.text.trim();
-              if (novo.isNotEmpty) TerritoriosStore.instance.renomear(index, novo);
+              if (novo.isNotEmpty) {
+                TerritoriosStore.instance.renomear(index, novo);
+              }
               Navigator.pop(ctx);
             },
             child: const Text('Salvar', style: TextStyle(color: Colors.white)),
@@ -398,9 +514,14 @@ class _TerritoriosPageState extends State<TerritoriosPage> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
-    final lista = TerritoriosStore.instance.lista;
+    final grupos = GruposStore.instance.lista;
+    final livres = TerritoriosStore.instance.lista
+        .where((t) => !grupos.any((g) => g.territorios.contains(t.numero)))
+        .toList();
+
     return Scaffold(
       backgroundColor: C.cinzaClaro,
       appBar: AppBar(
@@ -410,111 +531,206 @@ class _TerritoriosPageState extends State<TerritoriosPage> {
         title: const Text('TERRITÓRIOS DA CONGREGAÇÃO',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 0.5)),
         centerTitle: true,
-        actions: [
-          IconButton(
-            tooltip: 'Grupos',
-            icon: const Icon(Icons.groups),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ServoTerritorioPage()),
-            ),
-          ),
-          const BadgeUsuario(),
-          const BotaoSalvar(),
-        ],
+        actions: const [BadgeUsuario(), BotaoSalvar()],
       ),
       body: SafeArea(
-        child: ListView.separated(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-          itemCount: lista.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 14),
-          itemBuilder: (context, index) {
-            final t = lista[index];
-            final liberado = t.liberado;
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
+          children: [
+            _cabecalhoSecao(
+              icon: Icons.groups,
+              titulo: 'Grupos',
+              cor: C.azul,
+              contador: grupos.length,
+            ),
+            if (grupos.isEmpty)
+              _avisoVazio(
+                  'Nenhum grupo criado ainda. Toque em "Novo grupo" abaixo.')
+            else
+              ...grupos.map(_cartaoGrupo),
+            const SizedBox(height: 20),
+            _cabecalhoSecao(
+              icon: Icons.map_outlined,
+              titulo: 'Territórios livres',
+              cor: C.verde,
+              contador: livres.length,
+            ),
+            if (livres.isEmpty)
+              _avisoVazio('Todos os territórios estão designados em grupos.')
+            else
+              ...livres.map(_cartaoTerritorio),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _novoGrupo,
+        backgroundColor: C.azul,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('Novo grupo'),
+      ),
+    );
+  }
 
-            return Material(
-              color: liberado ? Colors.white : const Color(0xFFEDEDED),
-              borderRadius: BorderRadius.circular(14),
-              elevation: liberado ? 2 : 0,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(14),
-                onTap: () {
-                  if (!liberado) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Território bloqueado. Peça ao servo de território para liberar.',
-                        ),
-                        backgroundColor: C.vermelho,
-                        duration: Duration(seconds: 3),
-                      ),
-                    );
-                    return;
-                  }
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => DetalheTerritorioPage(
-                        numero: t.numero,
-                        nome: t.nome,
-                      ),
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                  child: Row(children: [
-                    Icon(
-                      liberado ? Icons.map : Icons.lock_outline,
-                      color: liberado ? C.azul : C.cinza,
-                      size: 38,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${t.numero} ${t.nome}',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: liberado ? C.azul : C.cinza,
-                            ),
-                          ),
-                          if (!liberado)
-                            const Padding(
-                              padding: EdgeInsets.only(top: 2),
-                              child: Text(
-                                'Bloqueado',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: C.cinza,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    if (liberado) ...[
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: C.azul, size: 22),
-                        onPressed: () => _editarNome(index),
-                      ),
-                      const Icon(Icons.play_arrow, color: C.amarelo, size: 30),
-                    ] else
-                      const Icon(Icons.lock, color: C.cinza, size: 22),
-                  ]),
+  Widget _cabecalhoSecao({
+    required IconData icon,
+    required String titulo,
+    required Color cor,
+    required int contador,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 10),
+      child: Row(children: [
+        Icon(icon, color: cor, size: 22),
+        const SizedBox(width: 8),
+        Text(titulo,
+            style: TextStyle(fontSize: 16,
+                fontWeight: FontWeight.bold, color: cor)),
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: C.bege,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text('$contador',
+              style: const TextStyle(fontSize: 12,
+                  color: C.azul, fontWeight: FontWeight.bold)),
+        ),
+      ]),
+    );
+  }
+
+  Widget _avisoVazio(String texto) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: C.borda),
+      ),
+      child: Text(texto,
+          style: const TextStyle(fontSize: 12,
+              color: C.cinza, fontStyle: FontStyle.italic)),
+    );
+  }
+
+  Widget _cartaoGrupo(Grupo g) {
+    final total = g.territorios.length;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        elevation: 1,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => GrupoDetalhePage(grupoId: g.id),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: C.bege,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Text('$total',
+                    style: const TextStyle(fontWeight: FontWeight.bold,
+                        fontSize: 16, color: C.azul)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(g.nome,
+                        style: const TextStyle(fontSize: 15,
+                            fontWeight: FontWeight.bold, color: C.azul)),
+                    const SizedBox(height: 2),
+                    Text('$total/${Grupo.maxTerritorios} territórios',
+                        style: const TextStyle(fontSize: 11, color: C.cinza)),
+                    if (g.territorios.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(g.territorios.join(' • '),
+                          style: const TextStyle(fontSize: 10,
+                              color: C.cinza, letterSpacing: 0.3)),
+                    ],
+                  ],
                 ),
               ),
-            );
-          },
+              const Icon(Icons.chevron_right, color: C.azul),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _cartaoTerritorio(Territorio t) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        elevation: 1,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DetalheTerritorioPage(
+                numero: t.numero,
+                nome: t.nome,
+              ),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: C.bege,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Text(t.numero.replaceAll('T-', ''),
+                    style: const TextStyle(fontWeight: FontWeight.bold,
+                        fontSize: 15, color: C.azul)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text('${t.numero} ${t.nome}',
+                    style: const TextStyle(fontSize: 14,
+                        fontWeight: FontWeight.bold, color: C.azul)),
+              ),
+              IconButton(
+                tooltip: 'Renomear',
+                icon: const Icon(Icons.edit, color: C.azul, size: 20),
+                onPressed: () => _editarNome(t),
+              ),
+              IconButton(
+                tooltip: 'Designar para grupo',
+                icon: const Icon(Icons.add_circle, color: C.verde, size: 28),
+                onPressed: () => _designarParaGrupo(t),
+              ),
+            ]),
+          ),
         ),
       ),
     );
   }
 }
+
 
 // ============== DETALHE TERRITÓRIO ==============
 class DetalheTerritorioPage extends StatefulWidget {
@@ -2193,6 +2409,7 @@ class _S13PageState extends State<S13Page> {
   }
 }
 
+
 // ============== EVENTOS ==============
 class EventosPage extends StatefulWidget {
   const EventosPage({super.key});
@@ -3260,4 +3477,3 @@ class _LinhaServico {
     this.dirigente = '',
   });
 }
-
