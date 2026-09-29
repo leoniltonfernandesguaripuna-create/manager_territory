@@ -199,6 +199,31 @@ class TerritoriosStore extends ChangeNotifier {
     _salvar();
   }
 
+  /// 🔓 Alterna manualmente o estado "liberado" do território.
+  /// Chamado quando o servo toca no botão de cadeado.
+  void alternarLiberado(String numero) {
+    for (final t in lista) {
+      if (t.numero == numero) {
+        t.liberado = !t.liberado;
+        break;
+      }
+    }
+    notifyListeners();
+    _salvar();
+  }
+
+  /// 🔒 Define manualmente o estado "liberado".
+  void definirLiberado(String numero, bool liberado) {
+    for (final t in lista) {
+      if (t.numero == numero) {
+        t.liberado = liberado;
+        break;
+      }
+    }
+    notifyListeners();
+    _salvar();
+  }
+
   void carregar(List<Map<String, dynamic>> dados) {
     if (dados.isEmpty) return;
     lista.clear();
@@ -208,7 +233,6 @@ class TerritoriosStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Expõe o método de salvar pra uso externo (ex: forçar sync no boot).
   void salvarNaNuvem() {
     _salvar();
   }
@@ -566,7 +590,6 @@ class DirigenteTerritorioStore {
 
   /// Retorna a maior data encontrada nas colunas de DATA da grade
   /// (colunas 2, 5, 8, 9, 10), percorrendo as linhas 1 a 10.
-  /// Essa é a "última data trabalhada" do território.
   static String ultimaDataTrabalhada(String territorio) {
     final map = _dados[territorio];
     if (map == null) return '';
@@ -696,7 +719,6 @@ class GruposStore extends ChangeNotifier {
 
   void excluir(String id) {
     lista.removeWhere((g) => g.id == id);
-    _sincronizarLiberados();
     notifyListeners();
     _salvar();
   }
@@ -709,9 +731,7 @@ class GruposStore extends ChangeNotifier {
       return 'Este território já está no grupo.';
     }
     g.territorios.add(territorioNumero);
-    // Primeiro território vira ativo automaticamente
     g.ativo ??= territorioNumero;
-    _sincronizarLiberados();
     notifyListeners();
     _salvar();
     return null;
@@ -724,7 +744,6 @@ class GruposStore extends ChangeNotifier {
     if (g.ativo == territorioNumero) {
       g.ativo = g.territorios.isEmpty ? null : g.territorios.first;
     }
-    _sincronizarLiberados();
     notifyListeners();
     _salvar();
   }
@@ -734,7 +753,6 @@ class GruposStore extends ChangeNotifier {
     if (g == null) return;
     if (!g.territorios.contains(territorioNumero)) return;
     g.ativo = territorioNumero;
-    _sincronizarLiberados();
     notifyListeners();
     _salvar();
   }
@@ -744,31 +762,7 @@ class GruposStore extends ChangeNotifier {
     for (final d in dados) {
       lista.add(Grupo.fromJson(d));
     }
-    _sincronizarLiberados();
     notifyListeners();
-  }
-
-  /// Método público pra forçar sincronização no boot do app.
-  /// Chama `_sincronizarLiberados` de novo, garantindo que os campos
-  /// `liberado` estejam 100% corretos depois de tudo carregado.
-  void sincronizarAgora() {
-    _sincronizarLiberados();
-  }
-
-  /// Atualiza o campo `liberado` de cada território.
-  /// Só fica liberado o território marcado como **ativo** em algum grupo
-  /// (aquele que o servo está trabalhando no momento).
-  ///
-  /// Também salva na nuvem, pra não voltar errado no próximo boot.
-  void _sincronizarLiberados() {
-    final territorios = TerritoriosStore.instance.lista;
-    for (final t in territorios) {
-      final ativoEmAlgumGrupo = lista.any((g) => g.ativo == t.numero);
-      t.liberado = ativoEmAlgumGrupo;
-    }
-    TerritoriosStore.instance.notifyListeners();
-    // 💾 Salva o estado atual na nuvem
-    TerritoriosStore.instance.salvarNaNuvem();
   }
 
   Future<void> _salvar() async {
