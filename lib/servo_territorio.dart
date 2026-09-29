@@ -425,12 +425,27 @@ class _ServoTerritorioPageState extends State<ServoTerritorioPage> {
       elevation: 2,
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => GrupoDetalhePage(grupoId: g.id),
-          ),
-        ),
+        onTap: () {
+  if (!liberado) {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text(
+        'Território bloqueado. Libere ele no cadeado 🔒 primeiro.',
+      ),
+      backgroundColor: C.vermelho,
+      duration: Duration(seconds: 2),
+    ));
+    return;
+  }
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => DetalheTerritorioPage(
+        numero: terr.numero,
+        nome: terr.nome,
+      ),
+    ),
+  );
+},
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 14, 6, 14),
           child: Row(children: [
