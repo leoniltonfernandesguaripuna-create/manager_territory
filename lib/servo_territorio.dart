@@ -48,14 +48,8 @@ Future<String?> _pedirNome({
 }
 
 // -----------------------------------------------------------------------------
-// Helpers de cor para a data (faixas de tempo)
+// Helpers de cor para a data
 // -----------------------------------------------------------------------------
-
-/// Retorna a cor conforme o tempo desde a data:
-/// - até 45 dias  → verde
-/// - até 90 dias  → laranja
-/// - acima de 90  → vermelho
-/// - vazio        → cinza
 Color _corUltimaData(String texto) {
   if (texto.trim().isEmpty) return C.cinza;
   final dt = _parseDataFlexivel(texto);
@@ -66,7 +60,6 @@ Color _corUltimaData(String texto) {
   return Colors.red;
 }
 
-/// Interpreta datas em formatos comuns: dd/mm/aaaa, dd/mm/aa, dd-mm-aaaa, etc.
 DateTime? _parseDataFlexivel(String txt) {
   final n = txt.replaceAll('-', '/').replaceAll('.', '/').trim();
   final p = n.split('/');
@@ -273,10 +266,7 @@ class _ServoTerritorioPageState extends State<ServoTerritorioPage> {
           width: double.maxFinite,
           height: 400,
           child: AnimatedBuilder(
-            animation: Listenable.merge([
-              DesignacaoStore.instance,
-              GruposStore.instance,
-            ]),
+            animation: DesignacaoStore.instance,
             builder: (context, _) {
               final territorios = TerritoriosStore.instance.lista;
               return ListView.separated(
@@ -284,7 +274,6 @@ class _ServoTerritorioPageState extends State<ServoTerritorioPage> {
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (_, i) {
                   final t = territorios[i];
-                  // 🎯 Agora pega da grade de Dirigente
                   final ultima = DirigenteTerritorioStore
                       .ultimaDataTrabalhada(t.numero);
                   final temData = ultima.isNotEmpty;
@@ -353,7 +342,6 @@ class _ServoTerritorioPageState extends State<ServoTerritorioPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Verificação de login: se não tem permissão, mostra tela de login
     if (!AuthStore.instance.podeAcessarServoTerritorio) {
       return const _TelaLoginServo();
     }
@@ -463,28 +451,9 @@ class _ServoTerritorioPageState extends State<ServoTerritorioPage> {
                   const SizedBox(height: 4),
                   Text('$total/${Grupo.maxTerritorios} territórios',
                       style: const TextStyle(fontSize: 12, color: C.cinza)),
-                  if (g.ativo != null) ...[
-                    const SizedBox(height: 4),
-                    Row(children: [
-                      const Icon(Icons.play_circle, color: C.verde, size: 16),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text('Trabalhando: ${g.ativo}',
-                            style: const TextStyle(fontSize: 12,
-                                color: C.verde, fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis),
-                      ),
-                    ]),
-                  ],
                 ],
               ),
             ),
-            if (!g.cheio)
-              IconButton(
-                tooltip: 'Adicionar território',
-                icon: const Icon(Icons.add_circle, color: C.azul, size: 28),
-                onPressed: () => _escolherTerritorio(context, g),
-              ),
             const Icon(Icons.chevron_right, color: C.azul),
             const SizedBox(width: 4),
           ]),
@@ -493,6 +462,7 @@ class _ServoTerritorioPageState extends State<ServoTerritorioPage> {
     );
   }
 }
+
 
 // =============================================================================
 // BOTTOM SHEET — escolher território com busca
@@ -630,7 +600,6 @@ class _SeletorTerritorioSheetState extends State<_SeletorTerritorioSheet> {
                       itemCount: _filtrados.length,
                       itemBuilder: (_, i) {
                         final t = _filtrados[i];
-                        // 🎯 Agora pega da grade de Dirigente
                         final ultima = DirigenteTerritorioStore
                             .ultimaDataTrabalhada(t.numero);
                         final temData = ultima.isNotEmpty;
@@ -673,7 +642,7 @@ class _SeletorTerritorioSheetState extends State<_SeletorTerritorioSheet> {
 }
 
 // =============================================================================
-// TELA DE DETALHE — designar territórios do grupo
+// TELA DE DETALHE — designar e LIBERAR territórios do grupo
 // =============================================================================
 class GrupoDetalhePage extends StatefulWidget {
   final String grupoId;
@@ -701,6 +670,29 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
 
   void _onChanged() {
     if (mounted) setState(() {});
+  }
+
+  /// 🔓 Libera este território e bloqueia todos os outros.
+  /// Se já estava liberado, apenas bloqueia (toggle).
+  void _toggleLiberado(String numero) {
+    final t = TerritoriosStore.instance.lista
+        .firstWhere((x) => x.numero == numero,
+            orElse: () => Territorio(numero: numero, nome: ''));
+    if (t.liberado) {
+      TerritoriosStore.instance.bloquearTodos();
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Todos os territórios bloqueados'),
+        backgroundColor: C.orange,
+        duration: Duration(seconds: 1),
+      ));
+    } else {
+      TerritoriosStore.instance.liberar(numero);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('$numero liberado para trabalhar'),
+        backgroundColor: C.verde,
+        duration: const Duration(seconds: 1),
+      ));
+    }
   }
 
   @override
@@ -745,12 +737,19 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
       body: SafeArea(
         child: grupo.vazio
             ? _grupoVazio()
-            : ListView.separated(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
-                itemCount: grupo.territorios.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (context, i) =>
-                    _linhaTerritorio(grupo, grupo.territorios[i]),
+            : Column(
+                children: [
+                  _aviso(),
+                  Expanded(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
+                      itemCount: grupo.territorios.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, i) =>
+                          _linhaTerritorio(grupo, grupo.territorios[i]),
+                    ),
+                  ),
+                ],
               ),
       ),
       floatingActionButton: grupo.cheio
@@ -762,6 +761,54 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
               icon: const Icon(Icons.add_location_alt),
               label: const Text('Designar território'),
             ),
+    );
+  }
+
+  Widget _aviso() {
+    final t = TerritoriosStore.instance.lista
+        .where((x) => x.liberado)
+        .toList();
+    if (t.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF3CD),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: C.amarelo),
+        ),
+        child: const Row(children: [
+          Icon(Icons.lock_outline, color: C.amarelo, size: 18),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Nenhum território liberado. Toque no cadeado 🔒 pra liberar.',
+              style: TextStyle(fontSize: 11, color: C.azul,
+                  fontWeight: FontWeight.w600),
+            ),
+          ),
+        ]),
+      );
+    }
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE6F4EA),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: C.verde),
+      ),
+      child: Row(children: [
+        const Icon(Icons.lock_open, color: C.verde, size: 18),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'Liberado pra trabalhar: ${t.first.numero}',
+            style: const TextStyle(fontSize: 11, color: C.azul,
+                fontWeight: FontWeight.w600),
+          ),
+        ),
+      ]),
     );
   }
 
@@ -792,16 +839,14 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
       (t) => t.numero == numero,
       orElse: () => Territorio(numero: numero, nome: '(removido)'),
     );
-    final ativo = grupo.ativo == numero;
-    // 🎯 Agora pega da grade de Dirigente
-    final ultima =
-        DirigenteTerritorioStore.ultimaDataTrabalhada(numero);
+    final liberado = terr.liberado;
+    final ultima = DirigenteTerritorioStore.ultimaDataTrabalhada(numero);
     final temData = ultima.isNotEmpty;
 
     return Material(
-      color: ativo ? const Color(0xFFE6F4EA) : Colors.white,
+      color: liberado ? const Color(0xFFE6F4EA) : Colors.white,
       borderRadius: BorderRadius.circular(12),
-      elevation: 1,
+      elevation: liberado ? 2 : 1,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => Navigator.push(
@@ -814,36 +859,28 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
+          padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
           child: Row(children: [
-            Radio<bool>(
-              value: true,
-              groupValue: ativo,
-              activeColor: C.verde,
-              onChanged: (_) {
-                if (!ativo) {
-                  GruposStore.instance.definirAtivo(grupo.id, numero);
-                }
-              },
-            ),
+            // Bolinha numerada
             Container(
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: ativo ? C.verde : C.bege,
+                color: liberado ? C.verde : C.bege,
                 borderRadius: BorderRadius.circular(8),
               ),
               alignment: Alignment.center,
               child: Text(
                 numero.replaceAll('T-', ''),
                 style: TextStyle(
-                  color: ativo ? Colors.white : C.azul,
+                  color: liberado ? Colors.white : C.azul,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
               ),
             ),
             const SizedBox(width: 10),
+            // Nome + última data
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -874,14 +911,12 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
                         const SizedBox(width: 8),
                       ],
                       Text(
-                        ativo
-                            ? 'Em andamento'
-                            : 'Toque para abrir',
+                        liberado ? 'Liberado ✅' : 'Bloqueado',
                         style: TextStyle(
                           fontSize: 11,
-                          color: ativo ? C.verde : C.cinza,
+                          color: liberado ? C.verde : C.cinza,
                           fontWeight:
-                              ativo ? FontWeight.bold : FontWeight.normal,
+                              liberado ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
                     ]),
@@ -889,12 +924,21 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
                 ],
               ),
             ),
+            // 🎯 BOTÃO DE LIBERAR / BLOQUEAR (cadeado)
             IconButton(
-              icon: const Icon(
-                Icons.remove_circle_outline,
-                color: Colors.redAccent,
+              tooltip: liberado ? 'Bloquear' : 'Liberar pra trabalhar',
+              icon: Icon(
+                liberado ? Icons.lock_open : Icons.lock_outline,
+                color: liberado ? C.verde : C.cinza,
+                size: 30,
               ),
+              onPressed: () => _toggleLiberado(numero),
+            ),
+            // Botão de remover do grupo
+            IconButton(
               tooltip: 'Remover do grupo',
+              icon: const Icon(Icons.remove_circle_outline,
+                  color: Colors.redAccent, size: 22),
               onPressed: () => _confirmarRemover(grupo, numero),
             ),
           ]),
@@ -970,9 +1014,6 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
 // =============================================================================
 // Função compartilhada de "escolher território"
 // =============================================================================
-
-/// Abre o seletor, e se o usuário escolher, adiciona ao grupo.
-/// Retorna `true` se algo foi adicionado.
 Future<bool> _escolherTerritorio(BuildContext context, Grupo grupo) async {
   final escolhido = await _mostrarSeletorTerritorio(context, grupo);
   if (escolhido == null || !context.mounted) return false;
@@ -986,3 +1027,4 @@ Future<bool> _escolherTerritorio(BuildContext context, Grupo grupo) async {
   }
   return true;
 }
+
