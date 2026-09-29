@@ -218,13 +218,23 @@ class TerritoriosStore extends ChangeNotifier {
   }
 
   void carregar(List<Map<String, dynamic>> dados) {
-    if (dados.isEmpty) return;
-    lista.clear();
-    for (final d in dados) {
-      lista.add(Territorio.fromJson(d));
-    }
-    notifyListeners();
+  if (dados.isEmpty) return;
+  lista.clear();
+  for (final d in dados) {
+    lista.add(Territorio.fromJson(d));
   }
+  // 🔧 Auto-conserto: se mais de 1 estiver liberado, mantém só o primeiro
+  // e bloqueia os outros. Isso corrige dados antigos no Firebase.
+  final liberados = lista.where((t) => t.liberado).toList();
+  if (liberados.length > 1) {
+    final manter = liberados.first.numero;
+    for (final t in lista) {
+      t.liberado = (t.numero == manter);
+    }
+    _salvar();
+  }
+  notifyListeners();
+}
 
   Future<void> _salvar() async {
     await Cloud.salvar('territorios', {
