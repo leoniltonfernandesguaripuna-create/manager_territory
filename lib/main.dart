@@ -77,8 +77,6 @@ Future<void> _carregarDados() async {
         (grp['lista'] as List).map((e) => Map<String, dynamic>.from(e)),
       ));
     }
-    // 🔒 Força a liberação correta (só o ativo de cada grupo)
-    GruposStore.instance.sincronizarAgora();
   } catch (_) {}
 }
 
