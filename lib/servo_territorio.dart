@@ -682,7 +682,7 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
       TerritoriosStore.instance.bloquearTodos();
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('Todos os territórios bloqueados'),
-        backgroundColor: C.orange,
+        backgroundColor: Colors.orange,
         duration: Duration(seconds: 1),
       ));
     } else {
