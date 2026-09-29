@@ -425,27 +425,12 @@ class _ServoTerritorioPageState extends State<ServoTerritorioPage> {
       elevation: 2,
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: () {
-  if (!liberado) {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text(
-        'Território bloqueado. Libere ele no cadeado 🔒 primeiro.',
-      ),
-      backgroundColor: C.vermelho,
-      duration: Duration(seconds: 2),
-    ));
-    return;
-  }
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => DetalheTerritorioPage(
-        numero: terr.numero,
-        nome: terr.nome,
-      ),
-    ),
-  );
-},
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => GrupoDetalhePage(grupoId: g.id),
+          ),
+        ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 14, 6, 14),
           child: Row(children: [
@@ -864,19 +849,31 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
       elevation: liberado ? 2 : 1,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DetalheTerritorioPage(
-              numero: terr.numero,
-              nome: terr.nome,
+        // 🎯 Só abre se estiver liberado
+        onTap: () {
+          if (!liberado) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text(
+                'Território bloqueado. Libere ele no cadeado 🔒 primeiro.',
+              ),
+              backgroundColor: C.vermelho,
+              duration: Duration(seconds: 2),
+            ));
+            return;
+          }
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DetalheTerritorioPage(
+                numero: terr.numero,
+                nome: terr.nome,
+              ),
             ),
-          ),
-        ),
+          );
+        },
         child: Padding(
           padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
           child: Row(children: [
-            // Bolinha numerada
             Container(
               width: 44,
               height: 44,
@@ -895,7 +892,6 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
               ),
             ),
             const SizedBox(width: 10),
-            // Nome + última data
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -939,7 +935,6 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
                 ],
               ),
             ),
-            // 🎯 BOTÃO DE LIBERAR / BLOQUEAR (cadeado)
             IconButton(
               tooltip: liberado ? 'Bloquear' : 'Liberar pra trabalhar',
               icon: Icon(
@@ -949,7 +944,6 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
               ),
               onPressed: () => _toggleLiberado(numero),
             ),
-            // Botão de remover do grupo
             IconButton(
               tooltip: 'Remover do grupo',
               icon: const Icon(Icons.remove_circle_outline,
@@ -1042,4 +1036,3 @@ Future<bool> _escolherTerritorio(BuildContext context, Grupo grupo) async {
   }
   return true;
 }
-
