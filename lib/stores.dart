@@ -208,6 +208,11 @@ class TerritoriosStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Expõe o método de salvar pra uso externo (ex: forçar sync no boot).
+  void salvarNaNuvem() {
+    _salvar();
+  }
+
   Future<void> _salvar() async {
     await Cloud.salvar('territorios', {
       'lista': lista.map((t) => t.toJson()).toList(),
@@ -743,9 +748,18 @@ class GruposStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Método público pra forçar sincronização no boot do app.
+  /// Chama `_sincronizarLiberados` de novo, garantindo que os campos
+  /// `liberado` estejam 100% corretos depois de tudo carregado.
+  void sincronizarAgora() {
+    _sincronizarLiberados();
+  }
+
   /// Atualiza o campo `liberado` de cada território.
   /// Só fica liberado o território marcado como **ativo** em algum grupo
   /// (aquele que o servo está trabalhando no momento).
+  ///
+  /// Também salva na nuvem, pra não voltar errado no próximo boot.
   void _sincronizarLiberados() {
     final territorios = TerritoriosStore.instance.lista;
     for (final t in territorios) {
@@ -753,6 +767,8 @@ class GruposStore extends ChangeNotifier {
       t.liberado = ativoEmAlgumGrupo;
     }
     TerritoriosStore.instance.notifyListeners();
+    // 💾 Salva o estado atual na nuvem
+    TerritoriosStore.instance.salvarNaNuvem();
   }
 
   Future<void> _salvar() async {
