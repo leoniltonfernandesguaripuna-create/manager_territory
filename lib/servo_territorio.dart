@@ -273,7 +273,10 @@ class _ServoTerritorioPageState extends State<ServoTerritorioPage> {
           width: double.maxFinite,
           height: 400,
           child: AnimatedBuilder(
-            animation: DesignacaoStore.instance,
+            animation: Listenable.merge([
+              DesignacaoStore.instance,
+              GruposStore.instance,
+            ]),
             builder: (context, _) {
               final territorios = TerritoriosStore.instance.lista;
               return ListView.separated(
@@ -281,8 +284,9 @@ class _ServoTerritorioPageState extends State<ServoTerritorioPage> {
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (_, i) {
                   final t = territorios[i];
-                  final ultima = DesignacaoStore.instance
-                      .ultimaDataConclusao(t.numero);
+                  // 🎯 Agora pega da grade de Dirigente
+                  final ultima = DirigenteTerritorioStore
+                      .ultimaDataTrabalhada(t.numero);
                   final temData = ultima.isNotEmpty;
                   return ListTile(
                     dense: true,
@@ -626,8 +630,9 @@ class _SeletorTerritorioSheetState extends State<_SeletorTerritorioSheet> {
                       itemCount: _filtrados.length,
                       itemBuilder: (_, i) {
                         final t = _filtrados[i];
-                        final ultima = DesignacaoStore.instance
-                            .ultimaDataConclusao(t.numero);
+                        // 🎯 Agora pega da grade de Dirigente
+                        final ultima = DirigenteTerritorioStore
+                            .ultimaDataTrabalhada(t.numero);
                         final temData = ultima.isNotEmpty;
                         return ListTile(
                           leading: CircleAvatar(
@@ -788,7 +793,9 @@ class _GrupoDetalhePageState extends State<GrupoDetalhePage> {
       orElse: () => Territorio(numero: numero, nome: '(removido)'),
     );
     final ativo = grupo.ativo == numero;
-    final ultima = DesignacaoStore.instance.ultimaDataConclusao(numero);
+    // 🎯 Agora pega da grade de Dirigente
+    final ultima =
+        DirigenteTerritorioStore.ultimaDataTrabalhada(numero);
     final temData = ultima.isNotEmpty;
 
     return Material(
