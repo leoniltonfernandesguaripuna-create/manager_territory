@@ -2411,6 +2411,8 @@ class _S13PageState extends State<S13Page> {
 
 
 // ============== EVENTOS ==============
+
+// ============== EVENTOS ==============
 class EventosPage extends StatefulWidget {
   const EventosPage({super.key});
   @override
@@ -2432,6 +2434,9 @@ class _EventosPageState extends State<EventosPage> {
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
 
+  // 💰 Valor por passagem (editável)
+  late TextEditingController _valorCtrl;
+
   @override
   void initState() {
     super.initState();
@@ -2442,6 +2447,13 @@ class _EventosPageState extends State<EventosPage> {
       (_) => List.generate(totalGrupos, (_) => TextEditingController()),
     );
     _searchController.addListener(_onSearch);
+    _valorCtrl = TextEditingController(
+      text: EventosStore.instance.valorPassagem == 0
+          ? ''
+          : EventosStore.instance.valorPassagem
+              .toStringAsFixed(2)
+              .replaceAll('.', ','),
+    );
     _preencherControllers();
     _recarregarDoFirestore();
   }
@@ -2449,7 +2461,8 @@ class _EventosPageState extends State<EventosPage> {
   void _preencherControllers() {
     for (int l = 0; l < totalLinhas; l++) {
       for (int g = 0; g < totalGrupos; g++) {
-        _nomes[l][g].text = EventosStore.instance.get(l, g)['nome'] as String? ?? '';
+        _nomes[l][g].text =
+            EventosStore.instance.get(l, g)['nome'] as String? ?? '';
       }
     }
   }
@@ -2459,9 +2472,14 @@ class _EventosPageState extends State<EventosPage> {
     try {
       final ev = await Cloud.ler('eventos');
       if (ev != null && ev['dados'] != null) {
-        EventosStore.instance.carregar(Map<String, dynamic>.from(ev['dados']));
+        EventosStore.instance.carregar(Map<String, dynamic>.from(ev));
         if (mounted) {
           _preencherControllers();
+          _valorCtrl.text = EventosStore.instance.valorPassagem == 0
+              ? ''
+              : EventosStore.instance.valorPassagem
+                  .toStringAsFixed(2)
+                  .replaceAll('.', ',');
           setState(() {});
         }
       }
@@ -2481,6 +2499,7 @@ class _EventosPageState extends State<EventosPage> {
     }
     _searchController.removeListener(_onSearch);
     _searchController.dispose();
+    _valorCtrl.dispose();
     super.dispose();
   }
 
@@ -2492,7 +2511,8 @@ class _EventosPageState extends State<EventosPage> {
     if (mounted) {
       for (int l = 0; l < totalLinhas; l++) {
         for (int g = 0; g < totalGrupos; g++) {
-          final salvo = EventosStore.instance.get(l, g)['nome'] as String? ?? '';
+          final salvo =
+              EventosStore.instance.get(l, g)['nome'] as String? ?? '';
           if (_nomes[l][g].text != salvo) {
             _nomes[l][g].text = salvo;
           }
@@ -2532,6 +2552,45 @@ class _EventosPageState extends State<EventosPage> {
 
   void _togglePg(int l, int g) {
     EventosStore.instance.togglePg(l, g);
+  }
+
+  // ===== CÁLCULOS =====
+  int _totalPassagensMarcadas() {
+    int t = 0;
+    for (int l = 0; l < totalLinhas; l++) {
+      for (int g = 0; g < totalGrupos; g++) {
+        t += EventosStore.instance.diasMarcados(l, g);
+      }
+    }
+    return t;
+  }
+
+  int _totalPessoasPagas() {
+    int t = 0;
+    for (int l = 0; l < totalLinhas; l++) {
+      for (int g = 0; g < totalGrupos; g++) {
+        if (EventosStore.instance.get(l, g)['pg'] as bool? ?? false) {
+          t++;
+        }
+      }
+    }
+    return t;
+  }
+
+  int _totalPassagensPagas() {
+    int t = 0;
+    for (int l = 0; l < totalLinhas; l++) {
+      for (int g = 0; g < totalGrupos; g++) {
+        if (EventosStore.instance.get(l, g)['pg'] as bool? ?? false) {
+          t += EventosStore.instance.diasMarcados(l, g);
+        }
+      }
+    }
+    return t;
+  }
+
+  String _fmt(double v) {
+    return 'R\$ ${v.toStringAsFixed(2).replaceAll('.', ',')}';
   }
 
   @override
@@ -2597,7 +2656,8 @@ class _EventosPageState extends State<EventosPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(_searchAtivo ? Icons.close : Icons.search, color: Colors.white),
+            icon: Icon(_searchAtivo ? Icons.close : Icons.search,
+                color: Colors.white),
             onPressed: () {
               setState(() {
                 if (_searchAtivo) {
@@ -2618,6 +2678,8 @@ class _EventosPageState extends State<EventosPage> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(10),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            _painelResumo(),
+            const SizedBox(height: 12),
             _aviso(),
             const SizedBox(height: 10),
             Container(
@@ -2635,9 +2697,250 @@ class _EventosPageState extends State<EventosPage> {
                 ]),
               ),
             ),
+            const SizedBox(height: 20),
           ]),
         ),
       ),
+    );
+  }
+
+  // ===== PAINEL DE RESUMO (4 caixas + 3 linhas) =====
+  Widget _painelResumo() {
+    final passagensMarcadas = _totalPassagensMarcadas();
+    final valor = EventosStore.instance.valorPassagem;
+    final estipulado = passagensMarcadas * valor;
+    final pessoasPagas = _totalPessoasPagas();
+    final passagensPagas = _totalPassagensPagas();
+    final recebido = passagensPagas * valor;
+    final restante = estipulado - recebido;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: C.borda),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          Expanded(
+            child: _caixaResumo(
+              titulo: 'PASSAGENS MARCADAS',
+              valor: '$passagensMarcadas',
+              cor: C.azul,
+              icon: Icons.confirmation_number_outlined,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _caixaValorPassagem(),
+          ),
+        ]),
+        const SizedBox(height: 8),
+        Row(children: [
+          Expanded(
+            child: _caixaResumo(
+              titulo: 'VALOR ESTIPULADO',
+              subtitulo: 'A receber',
+              valor: _fmt(estipulado),
+              cor: C.amarelo,
+              icon: Icons.savings_outlined,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _caixaResumo(
+              titulo: 'TOTAL RECEBIDO',
+              valor: _fmt(recebido),
+              cor: C.verde,
+              icon: Icons.attach_money,
+            ),
+          ),
+        ]),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: C.bege,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(children: [
+            _linhaResumo(
+              label: 'Pessoas pagas',
+              valor: '$pessoasPagas',
+              cor: C.verde,
+            ),
+            const SizedBox(height: 6),
+            _linhaResumo(
+              label: 'Passagens pagas',
+              valor: '$passagensPagas',
+              cor: C.verde,
+            ),
+            const Divider(height: 16),
+            _linhaResumo(
+              label: 'Restante',
+              valor: _fmt(restante),
+              cor: restante <= 0 ? C.verde : C.vermelho,
+              bold: true,
+            ),
+          ]),
+        ),
+      ]),
+    );
+  }
+
+  Widget _caixaResumo({
+    required String titulo,
+    String? subtitulo,
+    required String valor,
+    required Color cor,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: cor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: cor.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(icon, size: 14, color: cor),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                titulo,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  color: cor,
+                  letterSpacing: 0.3,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ]),
+          if (subtitulo != null)
+            Text(
+              subtitulo,
+              style: TextStyle(
+                fontSize: 9,
+                color: cor.withValues(alpha: 0.7),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          const SizedBox(height: 4),
+          Text(
+            valor,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: cor,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _caixaValorPassagem() {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: C.azul.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: C.azul.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            const Icon(Icons.attach_money, size: 14, color: C.azul),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                'VALOR POR PASSAGEM',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  color: C.azul,
+                  letterSpacing: 0.3,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ]),
+          const SizedBox(height: 4),
+          SizedBox(
+            height: 26,
+            child: TextField(
+              controller: _valorCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              textAlign: TextAlign.left,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: C.azul,
+              ),
+              decoration: const InputDecoration(
+                isDense: true,
+                prefixText: 'R\$ ',
+                prefixStyle: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: C.azul,
+                ),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+              onChanged: (v) {
+                final txt = v.replaceAll(',', '.').trim();
+                final valor = double.tryParse(txt) ?? 0;
+                EventosStore.instance.setValorPassagem(valor);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _linhaResumo({
+    required String label,
+    required String valor,
+    required Color cor,
+    bool bold = false,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: C.azul,
+            fontWeight: bold ? FontWeight.bold : FontWeight.w500,
+          ),
+        ),
+        Text(
+          valor,
+          style: TextStyle(
+            fontSize: 13,
+            color: cor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 
@@ -2676,7 +2979,7 @@ class _EventosPageState extends State<EventosPage> {
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            'Marque os dias (SEX/SÁB/DOM) e o pagamento (PG). Use a lupa.',
+            'Cada dia marcado (SEX/SÁB/DOM) = 1 passagem comprada.',
             style: TextStyle(fontSize: 11,
                 color: C.azul, fontWeight: FontWeight.w600),
           ),
@@ -2850,7 +3153,6 @@ class _EventosPageState extends State<EventosPage> {
     );
   }
 }
-
 // ============== ADMINISTRADOR ==============
 class AdminPage extends StatefulWidget {
   const AdminPage({super.key});
