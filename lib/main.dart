@@ -49,9 +49,10 @@ Future<void> _carregarDados() async {
     if (sc != null && sc['locais'] != null) {
       ServicoCampoStore.instance.carregar(Map<String, dynamic>.from(sc['locais']));
     }
+    // ⬇️ Eventos: passa o documento INTEIRO (agora tem 'dados' + 'valorPassagem')
     final ev = await Cloud.ler('eventos');
-    if (ev != null && ev['dados'] != null) {
-      EventosStore.instance.carregar(Map<String, dynamic>.from(ev['dados']));
+    if (ev != null) {
+      EventosStore.instance.carregar(Map<String, dynamic>.from(ev));
     }
     final mapas = await Cloud.ler('mapas');
     if (mapas != null) {
