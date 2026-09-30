@@ -127,26 +127,30 @@ class AuthStore extends ChangeNotifier {
 }
 
 // ============== APP STATE ==============
-class AppState extends ChangeNotifier {
-  static final AppState instance = AppState._();
-  AppState._();
-  DateTime? lastSaved;
-
-  void save() {
-    lastSaved = DateTime.now();
+void carregar(Map<String, dynamic> dados) {
+    _dados.clear();
+    // 💰 Lê o valor da passagem
+    if (dados['valorPassagem'] is num) {
+      _valorPassagem = (dados['valorPassagem'] as num).toDouble();
+    }
+    // 📋 Pega o map interno (dentro de 'dados')
+    final interno = dados['dados'];
+    if (interno is Map) {
+      interno.forEach((k, v) {
+        if (v is Map) {
+          _dados[k] = Map<String, dynamic>.from(v);
+        }
+      });
+    } else {
+      // fallback (se vier o map direto sem wrapper)
+      dados.forEach((k, v) {
+        if (v is Map && k != 'valorPassagem') {
+          _dados[k] = Map<String, dynamic>.from(v);
+        }
+      });
+    }
     notifyListeners();
   }
-
-  String get lastSavedText {
-    if (lastSaved == null) return 'Nunca salvo';
-    final d = lastSaved!;
-    return '${d.day.toString().padLeft(2, '0')}/'
-        '${d.month.toString().padLeft(2, '0')}/'
-        '${d.year} às '
-        '${d.hour.toString().padLeft(2, '0')}:'
-        '${d.minute.toString().padLeft(2, '0')}';
-  }
-}
 
 // ============== TERRITÓRIO ==============
 class Territorio {
