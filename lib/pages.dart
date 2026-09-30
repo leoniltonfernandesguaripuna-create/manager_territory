@@ -1415,11 +1415,13 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
   void _onChanged() {
     if (mounted) setState(() {});
   }
+
   List<_LinhaServico> _gerarLinhas(int ano, int mes) {
   final linhas = <_LinhaServico>[];
   const nomesSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
   int idxSegASex = 0;
   int idxSab = 0;
+  int idxDom = 0;
   final ultimoDia = DateTime(ano, mes + 1, 0).day;
   int ultimoDomingo = 0;
   for (int d = ultimoDia; d >= 1; d--) {
@@ -1437,22 +1439,32 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
 
     String dirigente = '';
     if (diaSemana >= 1 && diaSemana <= 5) {
-      // Seg a Sex → dirigentes normais
+      // Seg a Sex → coluna 0
       final lista = DirigentesStore.validos(0);
       if (lista.isNotEmpty) {
         dirigente = lista[idxSegASex % lista.length];
         idxSegASex++;
       }
     } else if (diaSemana == 6) {
-      // Sábado → dirigentes de sábado
+      // Sábado → coluna 1
       final lista = DirigentesStore.validos(1);
       if (lista.isNotEmpty) {
         dirigente = lista[idxSab % lista.length];
         idxSab++;
       }
     } else {
-      // 🎯 Domingo → SS do Grupo
-      dirigente = 'SS do Grupo';
+      // 🎯 Domingo
+      if (dia == ultimoDomingo) {
+        // Último domingo (sai do Salão do Reino) → coluna 2 (Domingo)
+        final lista = DirigentesStore.validos(2);
+        if (lista.isNotEmpty) {
+          dirigente = lista[idxDom % lista.length];
+          idxDom++;
+        }
+      } else {
+        // Domingos normais (cada um do seu grupo) → SS do Grupo
+        dirigente = 'SS do Grupo';
+      }
     }
 
     String local = '';
@@ -1460,7 +1472,6 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
       if (dia == ultimoDomingo) {
         local = 'Salão do Reino';
       } else {
-        // 🎯 Domingos normais → cada um do seu grupo
         local = 'Cada um do seu grupo';
       }
     }
@@ -1477,6 +1488,8 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
   }
   return linhas;
 }
+  
+    
 
   void _mudarMes(int delta) {
     if (!AuthStore.instance.podeEditarImportante) {
