@@ -1393,13 +1393,16 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
   late int _mes;
   late List<_LinhaServico> _linhas;
 
-  @override
   void initState() {
-    super.initState();
-    AuthStore.instance.addListener(_onChanged);
-    ServicoCampoStore.instance.addListener(_onChanged);
-    _linhas = _gerarLinhas(_ano, _mes);
-  }
+  super.initState();
+  AuthStore.instance.addListener(_onChanged);
+  ServicoCampoStore.instance.addListener(_onChanged);
+  // 🎯 Começa no mês atual (não fixo em set/2025)
+  final hoje = DateTime.now();
+  _ano = hoje.year;
+  _mes = hoje.month;
+  _linhas = _gerarLinhas(_ano, _mes);
+}
 
   @override
   void dispose() {
