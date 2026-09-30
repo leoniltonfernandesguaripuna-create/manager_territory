@@ -1694,28 +1694,7 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
   }
 
   Widget _celLocal(_LinhaServico l, double largura, Color? corTexto) {
-    if (l.semana == 'Dom') {
-      return Container(
-        width: largura,
-        height: hLinha,
-        decoration: const BoxDecoration(
-          border: Border(
-            right: BorderSide(color: C.borda),
-            bottom: BorderSide(color: C.borda),
-          ),
-        ),
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Text(l.local,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 11, color: corTexto ?? C.azul,
-                fontWeight: FontWeight.bold)),
-      );
-    }
-    final pode = AuthStore.instance.podeEditarImportante;
-    final saved = ServicoCampoStore.instance.locais[l.dataKey] ?? '';
+  if (l.semana == 'Dom') {
     return Container(
       width: largura,
       height: hLinha,
@@ -1725,25 +1704,49 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
           bottom: BorderSide(color: C.borda),
         ),
       ),
-      child: TextField(
-        controller: TextEditingController(text: saved)
-          ..selection = TextSelection.collapsed(offset: saved.length),
-        onChanged: pode
-            ? (v) => ServicoCampoStore.instance.setLocal(l.dataKey, v)
-            : null,
-        readOnly: !pode,
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 11, color: pode ? (corTexto ?? C.azul) : C.cinza),
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          isDense: true,
-          hintText: pode ? 'Local' : '—',
-          hintStyle: const TextStyle(fontSize: 10, color: C.cinza),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        ),
-      ),
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Text(l.local,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontSize: 11, color: corTexto ?? C.azul,
+              fontWeight: FontWeight.bold)),
     );
   }
+  final pode = AuthStore.instance.podeEditarImportante;
+  // 🎯 Chave baseada em SEMANA + HORÁRIO (repete todos os meses)
+  final chaveLocal = '${l.semana}|${l.horario}';
+  final saved = ServicoCampoStore.instance.locais[chaveLocal] ?? '';
+  return Container(
+    width: largura,
+    height: hLinha,
+    decoration: const BoxDecoration(
+      border: Border(
+        right: BorderSide(color: C.borda),
+        bottom: BorderSide(color: C.borda),
+      ),
+    ),
+    child: TextField(
+      controller: TextEditingController(text: saved)
+        ..selection = TextSelection.collapsed(offset: saved.length),
+      onChanged: pode
+          ? (v) => ServicoCampoStore.instance.setLocal(chaveLocal, v)
+          : null,
+      readOnly: !pode,
+      textAlign: TextAlign.center,
+      style: TextStyle(fontSize: 11, color: pode ? (corTexto ?? C.azul) : C.cinza),
+      decoration: InputDecoration(
+        border: InputBorder.none,
+        isDense: true,
+        hintText: pode ? 'Local' : '—',
+        hintStyle: const TextStyle(fontSize: 10, color: C.cinza),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      ),
+    ),
+  );
+}
+
 
   Widget _celDirigente(String nome, double largura, {Color? corTexto}) {
     final vazio = nome.isEmpty;
