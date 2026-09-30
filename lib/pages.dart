@@ -1415,71 +1415,68 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
   void _onChanged() {
     if (mounted) setState(() {});
   }
-
   List<_LinhaServico> _gerarLinhas(int ano, int mes) {
-    final linhas = <_LinhaServico>[];
-    const nomesSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-    int idxSegASex = 0;
-    int idxSab = 0;
-    int idxDom = 0;
-    int idxGrupoDomingo = 0;
-    final ultimoDia = DateTime(ano, mes + 1, 0).day;
-    int ultimoDomingo = 0;
-    for (int d = ultimoDia; d >= 1; d--) {
-      if (DateTime(ano, mes, d).weekday == DateTime.sunday) {
-        ultimoDomingo = d;
-        break;
-      }
+  final linhas = <_LinhaServico>[];
+  const nomesSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+  int idxSegASex = 0;
+  int idxSab = 0;
+  final ultimoDia = DateTime(ano, mes + 1, 0).day;
+  int ultimoDomingo = 0;
+  for (int d = ultimoDia; d >= 1; d--) {
+    if (DateTime(ano, mes, d).weekday == DateTime.sunday) {
+      ultimoDomingo = d;
+      break;
     }
-    for (int dia = 1; dia <= ultimoDia; dia++) {
-      final data = DateTime(ano, mes, dia);
-      final diaSemana = data.weekday;
-      String horario = '08:30';
-      if (diaSemana == DateTime.thursday) horario = '17:30';
-      if (ano >= 2026 && diaSemana == DateTime.wednesday) horario = '17:30';
-      String dirigente = '';
-      if (diaSemana >= 1 && diaSemana <= 5) {
-        final lista = DirigentesStore.validos(0);
-        if (lista.isNotEmpty) {
-          dirigente = lista[idxSegASex % lista.length];
-          idxSegASex++;
-        }
-      } else if (diaSemana == 6) {
-        final lista = DirigentesStore.validos(1);
-        if (lista.isNotEmpty) {
-          dirigente = lista[idxSab % lista.length];
-          idxSab++;
-        }
-      } else {
-        final listaSab = DirigentesStore.validos(1);
-        final listaDom = DirigentesStore.validos(2);
-        final combinada = [...listaSab, ...listaDom];
-        if (combinada.isNotEmpty) {
-          dirigente = combinada[idxDom % combinada.length];
-          idxDom++;
-        }
-      }
-      String local = '';
-      if (diaSemana == DateTime.sunday) {
-        if (dia == ultimoDomingo) {
-          local = 'Salão do Reino';
-        } else {
-          local = _grupos[idxGrupoDomingo % _grupos.length];
-          idxGrupoDomingo++;
-        }
-      }
-      final dataKey = '$ano-${mes.toString().padLeft(2, '0')}-${dia.toString().padLeft(2, '0')}';
-      linhas.add(_LinhaServico(
-        dataKey: dataKey,
-        mes: '${dia.toString().padLeft(2, '0')}/${mes.toString().padLeft(2, '0')}',
-        semana: nomesSemana[diaSemana - 1],
-        horario: horario,
-        dirigente: dirigente,
-        local: local,
-      ));
-    }
-    return linhas;
   }
+  for (int dia = 1; dia <= ultimoDia; dia++) {
+    final data = DateTime(ano, mes, dia);
+    final diaSemana = data.weekday;
+    String horario = '08:30';
+    if (diaSemana == DateTime.thursday) horario = '17:30';
+    if (ano >= 2026 && diaSemana == DateTime.wednesday) horario = '17:30';
+
+    String dirigente = '';
+    if (diaSemana >= 1 && diaSemana <= 5) {
+      // Seg a Sex → dirigentes normais
+      final lista = DirigentesStore.validos(0);
+      if (lista.isNotEmpty) {
+        dirigente = lista[idxSegASex % lista.length];
+        idxSegASex++;
+      }
+    } else if (diaSemana == 6) {
+      // Sábado → dirigentes de sábado
+      final lista = DirigentesStore.validos(1);
+      if (lista.isNotEmpty) {
+        dirigente = lista[idxSab % lista.length];
+        idxSab++;
+      }
+    } else {
+      // 🎯 Domingo → SS do Grupo
+      dirigente = 'SS do Grupo';
+    }
+
+    String local = '';
+    if (diaSemana == DateTime.sunday) {
+      if (dia == ultimoDomingo) {
+        local = 'Salão do Reino';
+      } else {
+        // 🎯 Domingos normais → cada um do seu grupo
+        local = 'Cada um do seu grupo';
+      }
+    }
+
+    final dataKey = '$ano-${mes.toString().padLeft(2, '0')}-${dia.toString().padLeft(2, '0')}';
+    linhas.add(_LinhaServico(
+      dataKey: dataKey,
+      mes: '${dia.toString().padLeft(2, '0')}/${mes.toString().padLeft(2, '0')}',
+      semana: nomesSemana[diaSemana - 1],
+      horario: horario,
+      dirigente: dirigente,
+      local: local,
+    ));
+  }
+  return linhas;
+}
 
   void _mudarMes(int delta) {
     if (!AuthStore.instance.podeEditarImportante) {
