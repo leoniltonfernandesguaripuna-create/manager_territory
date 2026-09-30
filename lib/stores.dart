@@ -436,12 +436,24 @@ class EventosStore extends ChangeNotifier {
   EventosStore._();
   final Map<String, dynamic> _dados = {};
   Timer? _debounceNome;
+  Timer? _debounceValor;
+
+  /// 💰 Valor unitário por passagem (editável pelo admin).
+  double _valorPassagem = 0.0;
+  double get valorPassagem => _valorPassagem;
 
   Map<String, dynamic> get dados => _dados;
 
   Map<String, dynamic> get(int l, int g) =>
       (_dados['${l}_$g'] as Map?)?.cast<String, dynamic>() ??
       {'nome': '', 'dias': 0, 'pg': false};
+
+  void setValorPassagem(double valor) {
+    _valorPassagem = valor;
+    notifyListeners();
+    _debounceValor?.cancel();
+    _debounceValor = Timer(const Duration(milliseconds: 800), _salvar);
+  }
 
   void setNome(int l, int g, String nome) {
     final k = '${l}_$g';
@@ -471,8 +483,21 @@ class EventosStore extends ChangeNotifier {
     _salvar();
   }
 
+  /// Conta quantos dias marcados tem nessa linha (0 a 3).
+  int diasMarcados(int l, int g) {
+    final dias = get(l, g)['dias'] as int? ?? 0;
+    int count = 0;
+    if ((dias & 1) != 0) count++;
+    if ((dias & 2) != 0) count++;
+    if ((dias & 4) != 0) count++;
+    return count;
+  }
+
   void carregar(Map<String, dynamic> dados) {
     _dados.clear();
+    if (dados['valorPassagem'] is num) {
+      _valorPassagem = (dados['valorPassagem'] as num).toDouble();
+    }
     dados.forEach((k, v) {
       if (v is Map) {
         _dados[k] = Map<String, dynamic>.from(v);
@@ -482,7 +507,10 @@ class EventosStore extends ChangeNotifier {
   }
 
   Future<void> _salvar() async {
-    await Cloud.salvar('eventos', {'dados': _dados});
+    await Cloud.salvar('eventos', {
+      'dados': _dados,
+      'valorPassagem': _valorPassagem,
+    });
   }
 }
 
