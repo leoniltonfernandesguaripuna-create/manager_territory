@@ -236,18 +236,18 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         const SizedBox(width: 10),
-        Expanded(
-          child: _botaoHome(
-            icon: Icons.menu_book,
-            label: 'TUTORIAL',
-            onTap: () {
-              // TODO: navegar para Tutorial
-            },
-          ),
-        ),
-      ],
-    );
-  }
+  Expanded(
+  child: _botaoHome(
+    icon: Icons.menu_book,
+    label: 'TUTORIAL',
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const TutorialPage()),
+      );
+    },
+  ),
+),
   Widget _botaoHome({
     required IconData icon,
     required String label,
