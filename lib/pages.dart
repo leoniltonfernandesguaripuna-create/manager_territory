@@ -1389,8 +1389,8 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
     'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO',
   ];
   static const List<String> _grupos = ['Grupo A', 'Grupo B', 'Grupo C'];
-  int _ano = 2025;
-  int _mes = 9;
+  late int _ano;
+  late int _mes;
   late List<_LinhaServico> _linhas;
 
   @override
