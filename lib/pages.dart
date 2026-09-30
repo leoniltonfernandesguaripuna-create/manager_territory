@@ -8,7 +8,7 @@ import 'stores.dart';
 import 'widgets.dart';
 import 'servo_territorio.dart';
 import 'tutorial.dart';        // ← ADICIONA ESSA LINHA
-
+import 'impressao.dart';
 // ============== HOME ==============
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
