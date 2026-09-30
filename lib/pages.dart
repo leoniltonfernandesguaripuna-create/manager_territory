@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -7,6 +8,7 @@ import 'tema.dart';
 import 'stores.dart';
 import 'widgets.dart';
 import 'servo_territorio.dart';
+import 'tutorial.dart';        // ← ADICIONA ESSA LINHA
 
 // ============== HOME ==============
 class HomePage extends StatefulWidget {
