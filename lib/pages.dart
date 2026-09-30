@@ -1488,7 +1488,21 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
   return linhas;
 }
   
-    
+void _imprimir() {
+  final nomeMes = _nomesMeses[_mes - 1];
+  final titulo = '$nomeMes $_ano';
+  final linhas = _linhas.map((l) => [
+        l.mes,
+        l.semana,
+        l.local.isEmpty
+            ? (l.semana == 'Dom' ? '—' : (ServicoCampoStore.instance.locais['${l.semana}|${l.horario}'] ?? ''))
+            : l.local,
+        l.horario,
+        l.dirigente.isEmpty ? '—' : l.dirigente,
+      ]).toList();
+  imprimirServicoCampo(titulo: titulo, linhas: linhas);
+}
+
 
   void _mudarMes(int delta) {
     if (!AuthStore.instance.podeEditarImportante) {
