@@ -1693,33 +1693,59 @@ void _imprimir() {
     );
   }
 
-  Widget _celHorario(String horario, double largura, {Color? corTexto, Color? fundoLinha}) {
-    final isTarde = horario == '17:30';
-    final corDestaque = isTarde
-        ? (fundoLinha == C.vinho ? const Color(0xFFFFE0B2) : C.bege)
-        : Colors.transparent;
-    return Container(
-      width: largura,
-      height: hLinha,
-      decoration: const BoxDecoration(
-        border: Border(
-          right: BorderSide(color: C.borda),
-          bottom: BorderSide(color: C.borda),
-        ),
+  
+  Widget _celHorario(String horario, double largura, {Color? corTexto, Color? fundoLinha, String? semana}) {
+  final isTarde = horario.contains('17') || horario.contains('18') || horario.contains('19');
+  final corDestaque = isTarde
+      ? (fundoLinha == C.vinho ? const Color(0xFFFFE0B2) : C.bege)
+      : Colors.transparent;
+  final pode = AuthStore.instance.podeEditarImportante || AuthStore.instance.isServo;
+
+  return Container(
+    width: largura,
+    height: hLinha,
+    decoration: const BoxDecoration(
+      border: Border(
+        right: BorderSide(color: C.borda),
+        bottom: BorderSide(color: C.borda),
       ),
-      alignment: Alignment.center,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          color: corDestaque,
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(horario,
-            style: TextStyle(fontSize: 11, color: corTexto ?? C.azul,
-                fontWeight: FontWeight.bold)),
+    ),
+    alignment: Alignment.center,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: corDestaque,
+        borderRadius: BorderRadius.circular(6),
       ),
-    );
-  }
+      child: (semana == null || semana == 'Dom')
+          ? Text(horario,
+              style: TextStyle(fontSize: 11, color: corTexto ?? C.azul,
+                  fontWeight: FontWeight.bold))
+          : TextField(
+              controller: TextEditingController(
+                  text: ServicoCampoStore.instance.horarioSalvo(semana))
+                ..selection = TextSelection.collapsed(
+                  offset: ServicoCampoStore.instance.horarioSalvo(semana).length,
+                ),
+              onChanged: pode
+                  ? (v) => ServicoCampoStore.instance.setHorario(semana, v)
+                  : null,
+              readOnly: !pode,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                color: pode ? (corTexto ?? C.azul) : C.cinza,
+                fontWeight: FontWeight.bold,
+              ),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+    ),
+  );
+}
 
   Widget _celLocal(_LinhaServico l, double largura, Color? corTexto) {
   if (l.semana == 'Dom') {
