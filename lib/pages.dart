@@ -1432,10 +1432,7 @@ class _ServicoCampoPageState extends State<ServicoCampoPage> {
   for (int dia = 1; dia <= ultimoDia; dia++) {
     final data = DateTime(ano, mes, dia);
     final diaSemana = data.weekday;
-    String horario = '08:30';
-    if (diaSemana == DateTime.thursday) horario = '17:30';
-    if (ano >= 2026 && diaSemana == DateTime.wednesday) horario = '17:30';
-
+    final horario = ServicoCampoStore.instance.horarioSalvo(nomesSemana[diaSemana - 1]);
     String dirigente = '';
     if (diaSemana >= 1 && diaSemana <= 5) {
       // Seg a Sex → coluna 0
