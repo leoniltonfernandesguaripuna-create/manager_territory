@@ -2500,8 +2500,6 @@ class _S13PageState extends State<S13Page> {
 
 
 // ============== EVENTOS ==============
-
-// ============== EVENTOS ==============
 class EventosPage extends StatefulWidget {
   const EventosPage({super.key});
   @override
@@ -2733,6 +2731,29 @@ class _EventosPageState extends State<EventosPage> {
               style: TextStyle(fontWeight: FontWeight.bold,
                   fontSize: 16, letterSpacing: 0.5)),
           centerTitle: true,
+          actions: [
+  IconButton(
+    icon: Icon(_searchAtivo ? Icons.close : Icons.search, color: Colors.white),
+    onPressed: () {
+      setState(() {
+        if (_searchAtivo) {
+          _searchAtivo = false;
+          _searchController.clear();
+          _query = '';
+        } else {
+          _searchAtivo = true;
+        }
+      });
+    },
+  ),
+  IconButton(
+    tooltip: 'Imprimir',
+    icon: const Icon(Icons.print),
+    onPressed: _imprimir,
+  ),
+  const BadgeUsuario(),
+  const BotaoSalvar(),
+],
           actions: const [BadgeUsuario(), BotaoSalvar()],
         ),
         body: Center(
