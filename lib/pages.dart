@@ -2150,6 +2150,32 @@ class _S13PageState extends State<S13Page> {
       }
     });
   }
+  void _imprimir() {
+  final linhas = List.generate(totalLinhas, (linha) {
+    final terrNum = 'T-${linha + 1}';
+    final ultima = _ultima[linha].text;
+
+    final blocos = List.generate(totalBlocos, (bloco) {
+      final nome = _blocos[linha][bloco][0].text.trim();
+      final dataDes = _blocos[linha][bloco][1].text.trim();
+      final dataCon = _blocos[linha][bloco][2].text.trim();
+      if (nome.isEmpty && dataDes.isEmpty && dataCon.isEmpty) return '—';
+      return '$nome\n$dataDes → $dataCon';
+    });
+
+    return [
+      terrNum,
+      ultima.isEmpty ? '—' : ultima,
+      ...blocos,
+    ];
+  });
+
+  imprimirS13(
+    anoServico: _anoServico.text.trim(),
+    linhas: linhas,
+  );
+}
+
 
   void _limparTudo() {
     if (!AuthStore.instance.podeEditarImportante) {
