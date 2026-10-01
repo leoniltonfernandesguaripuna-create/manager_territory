@@ -404,30 +404,67 @@ class DirigentesStore {
 }
 
 // ============== SERVIÇO DE CAMPO STORE ==============
+
 class ServicoCampoStore extends ChangeNotifier {
   static final ServicoCampoStore instance = ServicoCampoStore._();
   ServicoCampoStore._();
+
+  /// Locais — chave: dia da semana (Seg, Ter, Qua, Qui, Sex, Sáb)
   final Map<String, String> locais = {};
+
+  /// Horários editados — chave: dia da semana
+  final Map<String, String> horarios = {};
+
   Timer? _debounce;
 
-  void setLocal(String dataKey, String valor) {
-    locais[dataKey] = valor;
+  void setLocal(String chave, String valor) {
+    locais[chave] = valor;
     notifyListeners();
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 800), _salvar);
   }
 
+  void setHorario(String semana, String valor) {
+    horarios[semana] = valor;
+    notifyListeners();
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 800), _salvar);
+  }
+
+  /// Retorna o horário do dia: o salvo, ou o padrão (Qui=17:30, resto=08:30)
+  String horarioSalvo(String semana) {
+    final salvo = horarios[semana];
+    if (salvo != null && salvo.trim().isNotEmpty) return salvo;
+    return _defaultHorario(semana);
+  }
+
+  static String _defaultHorario(String semana) {
+    if (semana == 'Qui') return '17:30';
+    return '08:30';
+  }
+
   void carregar(Map<String, dynamic> dados) {
     locais.clear();
-    dados.forEach((k, v) => locais[k] = v.toString());
+    horarios.clear();
+
+    final l = dados['locais'];
+    if (l is Map) {
+      l.forEach((k, v) => locais[k.toString()] = v.toString());
+    }
+    final h = dados['horarios'];
+    if (h is Map) {
+      h.forEach((k, v) => horarios[k.toString()] = v.toString());
+    }
     notifyListeners();
   }
 
   Future<void> _salvar() async {
-    await Cloud.salvar('servico_campo', {'locais': locais});
+    await Cloud.salvar('servico_campo', {
+      'locais': locais,
+      'horarios': horarios,
+    });
   }
 }
-
 // ============== EVENTOS STORE ==============
 class EventosStore extends ChangeNotifier {
   static final EventosStore instance = EventosStore._();
