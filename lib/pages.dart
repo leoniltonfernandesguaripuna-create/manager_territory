@@ -2638,6 +2638,42 @@ class _EventosPageState extends State<EventosPage> {
   void _toggleDia(int l, int g, int bit) {
     EventosStore.instance.toggleDia(l, g, bit);
   }
+  void _imprimir() {
+  // Monta as 4 tabelas de grupos (cada uma com 20 linhas)
+  final grupos = List.generate(totalGrupos, (g) {
+    return List.generate(totalLinhas, (l) {
+      final nome = EventosStore.instance.get(l, g)['nome'] as String? ?? '';
+      final dias = EventosStore.instance.diasMarcados(l, g);
+      final pg = EventosStore.instance.get(l, g)['pg'] as bool? ?? false;
+      return [
+        _num(l, g),
+        nome.isEmpty ? '—' : nome,
+        dias == 0 ? '—' : '$dias',
+        pg ? 'PAGO' : 'N/PG',
+      ];
+    });
+  });
+
+  final passagensMarcadas = _totalPassagensMarcadas();
+  final valor = EventosStore.instance.valorPassagem;
+  final estipulado = passagensMarcadas * valor;
+  final pessoasPagas = _totalPessoasPagas();
+  final passagensPagas = _totalPassagensPagas();
+  final recebido = passagensPagas * valor;
+  final restante = estipulado - recebido;
+
+  imprimirEventos(
+    passagensMarcadas: passagensMarcadas,
+    valorPassagem: valor,
+    estipulado: estipulado,
+    recebido: recebido,
+    pessoasPagas: pessoasPagas,
+    passagensPagas: passagensPagas,
+    restante: restante,
+    grupos: grupos,
+  );
+}
+
 
   void _togglePg(int l, int g) {
     EventosStore.instance.togglePg(l, g);
