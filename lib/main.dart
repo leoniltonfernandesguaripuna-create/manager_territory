@@ -45,10 +45,12 @@ Future<void> _carregarDados() async {
     if (adm != null && adm['senhas'] != null) {
       AuthStore.instance.carregarAdmins(Map<String, String>.from(adm['senhas']));
     }
+    
     final sc = await Cloud.ler('servico_campo');
-    if (sc != null && sc['locais'] != null) {
-      ServicoCampoStore.instance.carregar(Map<String, dynamic>.from(sc['locais']));
-    }
+    if (sc != null) {
+     ServicoCampoStore.instance.carregar(Map<String, dynamic>.from(sc));
+}
+    
     // ⬇️ Eventos: passa o documento INTEIRO (agora tem 'dados' + 'valorPassagem')
     final ev = await Cloud.ler('eventos');
     if (ev != null) {
