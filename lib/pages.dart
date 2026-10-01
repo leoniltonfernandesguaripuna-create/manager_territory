@@ -2266,6 +2266,11 @@ class _S13PageState extends State<S13Page> {
         centerTitle: true,
         actions: [
           IconButton(
+          tooltip: 'Imprimir',
+          icon: const Icon(Icons.print),
+         onPressed: _imprimir,
+         ),
+          IconButton(
             tooltip: 'Limpar S.13',
             icon: const Icon(Icons.delete_sweep, color: Colors.white),
             onPressed: _limparTudo,
