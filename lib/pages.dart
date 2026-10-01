@@ -2131,7 +2131,7 @@ class _S13PageState extends State<S13Page> {
     if (!mounted) return;
     setState(() {
       for (int linha = 0; linha < totalLinhas; linha++) {
-        final terrNum = 'T-${linha + 1}';
+        final terrNum = _terr[linha].text.trim();
         if (_terr[linha].text != terrNum) _terr[linha].text = terrNum;
         final ultima = DesignacaoStore.instance.ultimaDataConclusao(terrNum);
         if (_ultima[linha].text != ultima) _ultima[linha].text = ultima;
