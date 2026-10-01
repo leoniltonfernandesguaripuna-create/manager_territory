@@ -9,6 +9,7 @@ const _verdePDF = PdfColor.fromInt(0xFF2F855A);
 // =============================================================================
 // IMPRESSÃO — SERVIÇO DE CAMPO
 // =============================================================================
+
 Future<void> imprimirServicoCampo({
   required String titulo,
   required List<List<String>> linhas,
@@ -17,41 +18,41 @@ Future<void> imprimirServicoCampo({
   doc.addPage(
     pw.MultiPage(
       pageFormat: PdfPageFormat.a4.landscape,
-      margin: const pw.EdgeInsets.all(24),
+      margin: const pw.EdgeInsets.all(10),
       build: (ctx) => [
         pw.Center(
           child: pw.Text(
             'SERVIÇO DE CAMPO — $titulo',
             style: pw.TextStyle(
-              fontSize: 16,
+              fontSize: 12,
               fontWeight: pw.FontWeight.bold,
               color: _azulPDF,
             ),
           ),
         ),
-        pw.SizedBox(height: 14),
+        pw.SizedBox(height: 6),
         pw.TableHelper.fromTextArray(
-          headers: ['MÊS', 'SEMANA', 'LOCAL', 'HORÁRIO', 'DIRIGENTE'],
+          headers: const ['MÊS', 'SEMANA', 'LOCAL', 'HORÁRIO', 'DIRIGENTE'],
           data: linhas,
           headerStyle: pw.TextStyle(
-              fontSize: 10,
+              fontSize: 8,
               fontWeight: pw.FontWeight.bold,
               color: PdfColors.white),
           headerDecoration: const pw.BoxDecoration(color: _azulPDF),
-          cellStyle: const pw.TextStyle(fontSize: 9),
+          cellStyle: const pw.TextStyle(fontSize: 7),
           cellAlignment: pw.Alignment.center,
           headerAlignment: pw.Alignment.center,
           border:
-              pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
+              pw.TableBorder.all(color: PdfColors.grey400, width: 0.3),
           cellPadding: const pw.EdgeInsets.symmetric(
-              horizontal: 4, vertical: 4),
+              horizontal: 3, vertical: 1.2),
+          headerCellDecoration: const pw.BoxDecoration(color: _azulPDF),
         ),
       ],
     ),
   );
   await Printing.layoutPdf(onLayout: (format) async => doc.save());
 }
-
 // =============================================================================
 // IMPRESSÃO — EVENTOS
 // =============================================================================
