@@ -9,6 +9,7 @@ import 'widgets.dart';
 import 'servo_territorio.dart';
 import 'tutorial.dart';        // ← ADICIONA ESSA LINHA
 import 'impressao.dart';
+import 'backup.dart';
 // ============== HOME ==============
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -3486,6 +3487,52 @@ class _AdminPageState extends State<AdminPage> {
         ]),
       ),
       const SizedBox(height: 16),
+      // ===== BACKUP / RESTAURAÇÃO =====
+Container(
+  padding: const EdgeInsets.all(16),
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(16),
+  ),
+  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+    const Row(children: [
+      Icon(Icons.backup_outlined, color: C.azul, size: 22),
+      SizedBox(width: 8),
+      Text('Backup e Restauração',
+          style: TextStyle(fontWeight: FontWeight.bold,
+              color: C.azul, fontSize: 14)),
+    ]),
+    const SizedBox(height: 4),
+    const Text(
+      'Salve uma cópia dos dados ou restaure de um arquivo anterior.',
+      style: TextStyle(fontSize: 11, color: C.cinza),
+    ),
+    const SizedBox(height: 12),
+    ElevatedButton.icon(
+      onPressed: () => exportarBackup(context),
+      icon: const Icon(Icons.download, size: 18),
+      label: const Text('Exportar backup (salvar arquivo)'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: C.verde,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+      ),
+    ),
+    const SizedBox(height: 8),
+    OutlinedButton.icon(
+      onPressed: () => importarBackup(context),
+      icon: const Icon(Icons.upload, size: 18),
+      label: const Text('Restaurar backup (carregar arquivo)'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: C.azul,
+        side: BorderSide(color: C.azul.withValues(alpha: 0.5)),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+      ),
+    ),
+  ]),
+),
+const SizedBox(height: 16),
+
       SizedBox(
         height: 48,
         child: ElevatedButton.icon(
