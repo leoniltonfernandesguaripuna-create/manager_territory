@@ -266,72 +266,112 @@ Future<void> imprimirEventos({
 // =============================================================================
 // IMPRESSÃO — S.13
 // =============================================================================
+
 Future<void> imprimirS13({
   required String anoServico,
   required List<List<String>> linhas,
 }) async {
   final doc = pw.Document();
   doc.addPage(
-    pw.MultiPage(
+    pw.Page(
       pageFormat: PdfPageFormat.a4.landscape,
       margin: const pw.EdgeInsets.all(20),
-      build: (ctx) => [
-        pw.Center(
-          child: pw.Text(
-            'REGISTRO DE DESIGNAÇÃO DE TERRITÓRIO',
-            style: pw.TextStyle(
-              fontSize: 16,
-              fontWeight: pw.FontWeight.bold,
+      build: (ctx) => pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        children: [
+          pw.Center(
+            child: pw.Text(
+              'REGISTRO DE DESIGNAÇÃO DE TERRITÓRIO',
+              style: pw.TextStyle(
+                fontSize: 16,
+                fontWeight: pw.FontWeight.bold,
+              ),
             ),
           ),
-        ),
-        pw.SizedBox(height: 6),
-        pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.end,
-          children: [
-            pw.Text('Ano de Serviço: $anoServico',
-                style: const pw.TextStyle(fontSize: 11)),
-          ],
-        ),
-        pw.SizedBox(height: 10),
-        pw.TableHelper.fromTextArray(
-          headers: const [
-            'Terr.\nn.º',
-            'Última data\nconcluída',
-            'Designação 1',
-            'Designação 2',
-            'Designação 3',
-            'Designação 4',
-          ],
-          data: linhas,
-          headerStyle: pw.TextStyle(
-              fontSize: 8,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColors.white),
-          headerDecoration: const pw.BoxDecoration(color: _azulPDF),
-          cellStyle: const pw.TextStyle(fontSize: 8),
-          cellAlignment: pw.Alignment.center,
-          headerAlignment: pw.Alignment.center,
-          border:
-              pw.TableBorder.all(color: PdfColors.black, width: 0.5),
-          cellPadding: const pw.EdgeInsets.symmetric(
-              horizontal: 3, vertical: 4),
-          columnWidths: {
-            0: const pw.FixedColumnWidth(35),
-            1: const pw.FixedColumnWidth(60),
-            2: const pw.FlexColumnWidth(1),
-            3: const pw.FlexColumnWidth(1),
-            4: const pw.FlexColumnWidth(1),
-            5: const pw.FlexColumnWidth(1),
-          },
-        ),
-        pw.SizedBox(height: 8),
-        pw.Text('S-13-T 01/22',
-            style: const pw.TextStyle(fontSize: 8)),
-      ],
+          pw.SizedBox(height: 6),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.end,
+            children: [
+              pw.Text(
+                'Ano de Serviço: ${anoServico.isEmpty ? "____" : anoServico}',
+                style: const pw.TextStyle(fontSize: 11),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 8),
+          pw.Expanded(
+            child: pw.Table(
+              border: pw.TableBorder.all(color: PdfColors.black, width: 0.6),
+              columnWidths: {
+                0: const pw.FixedColumnWidth(38),
+                1: const pw.FixedColumnWidth(75),
+                2: const pw.FlexColumnWidth(1),
+                3: const pw.FlexColumnWidth(1),
+                4: const pw.FlexColumnWidth(1),
+                5: const pw.FlexColumnWidth(1),
+              },
+              children: [
+                // === Cabeçalho ===
+                pw.TableRow(
+                  decoration: const pw.BoxDecoration(color: _azulPDF),
+                  children: [
+                    _cellCabecalhoPDF('Terr.\nn.º'),
+                    _cellCabecalhoPDF('Última data\nconcluída'),
+                    _cellCabecalhoPDF('Designação 1'),
+                    _cellCabecalhoPDF('Designação 2'),
+                    _cellCabecalhoPDF('Designação 3'),
+                    _cellCabecalhoPDF('Designação 4'),
+                  ],
+                ),
+                // === Linhas de dados ===
+                ...linhas.map((linha) {
+                  return pw.TableRow(
+                    children: List.generate(linha.length, (i) {
+                      final texto = linha[i].replaceAll('—', '-');
+                      final vazio = texto.trim().isEmpty || texto.trim() == '-';
+                      return pw.Container(
+                        alignment: pw.Alignment.center,
+                        padding: const pw.EdgeInsets.symmetric(
+                            horizontal: 3, vertical: 4),
+                        child: pw.Text(
+                          vazio ? '-' : texto,
+                          textAlign: pw.TextAlign.center,
+                          style: pw.TextStyle(
+                            fontSize: 9,
+                            color: vazio ? PdfColors.grey600 : PdfColors.black,
+                          ),
+                        ),
+                      );
+                    }),
+                  );
+                }),
+              ],
+            ),
+          ),
+          pw.SizedBox(height: 6),
+          pw.Text('S-13-T 01/22',
+              style: const pw.TextStyle(fontSize: 8)),
+        ],
+      ),
     ),
   );
   await Printing.layoutPdf(onLayout: (format) async => doc.save());
+}
+
+pw.Widget _cellCabecalhoPDF(String texto) {
+  return pw.Container(
+    alignment: pw.Alignment.center,
+    padding: const pw.EdgeInsets.symmetric(vertical: 5, horizontal: 3),
+    child: pw.Text(
+      texto,
+      textAlign: pw.TextAlign.center,
+      style: pw.TextStyle(
+        fontSize: 9.5,
+        fontWeight: pw.FontWeight.bold,
+        color: PdfColors.white,
+      ),
+    ),
+  );
 }
 
 // =============================================================================
