@@ -1552,7 +1552,15 @@ void _imprimir() {
         title: const Text('SERVIÇO DE CAMPO',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 0.5)),
         centerTitle: true,
-        actions: const [BadgeUsuario(), BotaoSalvar()],
+        actions: [
+  IconButton(
+    tooltip: 'Imprimir',
+    icon: const Icon(Icons.print),
+    onPressed: _imprimir,
+  ),
+  const BadgeUsuario(),
+  const BotaoSalvar(),
+],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
